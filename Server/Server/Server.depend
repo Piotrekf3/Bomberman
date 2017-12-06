@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1512561335 source:/root/Bomberman/Server/Server/main.cpp
+	<iostream>
+	<fcntl.h>
+	<unistd.h>
+	<sys/socket.h>
+	<netinet/in.h>
+	<arpa/inet.h>
+
