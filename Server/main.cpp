@@ -19,12 +19,11 @@ mutex gameStart;
 
 void readThread(int sd)
 {
-
+	
 }
 
 void writeThread(int sd)
 {
-
 }
 
 void clientThread(int sd)
@@ -33,7 +32,11 @@ void clientThread(int sd)
     cout<<"client "<<sd<<" thread\n";
     gameStart.unlock();
     //start gry
+    thread read = thread(readThread,sd);
+    thread write = thread(writeThread,sd);
 
+    read.join();
+    write.join();
 }
 
 void initGameMap()
