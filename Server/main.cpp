@@ -12,16 +12,28 @@ const int mapWidth = 10;
 const int mapHeight = 10;
 int gameMap[mapWidth][mapHeight];
 
-const char * serverIp="192.168.0.19";
+const char * serverIp="127.0.0.1";
 const int maxPlayersNumber=2;
 
 mutex gameStart;
+
+void readThread(int sd)
+{
+
+}
+
+void writeThread(int sd)
+{
+
+}
 
 void clientThread(int sd)
 {
     gameStart.lock();
     cout<<"client "<<sd<<" thread\n";
     gameStart.unlock();
+    //start gry
+
 }
 
 void initGameMap()
