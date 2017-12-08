@@ -1,4 +1,7 @@
 #include <iostream>
+#include <error.h>
+#include <errno.h>
+#include <cstdlib>
 #include <fcntl.h>
 #include <unistd.h>
 #include <thread>
@@ -17,13 +20,40 @@ const int maxPlayersNumber=2;
 
 mutex gameStart;
 
+ssize_t readData(int fd, char * buffer, ssize_t buffsize) {
+    auto ret = read(fd, buffer, buffsize);
+    if(ret==-1) error(1,errno, "read failed on descriptor %d", fd);
+    return ret;
+}
+
+void writeData(int fd, char * buffer, ssize_t count) {
+    auto ret = write(fd, buffer, count);
+    if(ret==-1) error(1, errno, "write failed on descriptor %d", fd);
+    if(ret!=count) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, count, ret);
+}
+
 void readThread(int sd)
 {
-	
+    while(1)
+    {
+        ssize_t bufsize1 = 255, received1;
+        char buffer1[bufsize1];
+        received1 = readData(sd, buffer1, bufsize1);
+        writeData(1, buffer1, received1);
+    }
 }
 
 void writeThread(int sd)
 {
+
+    ssize_t bufsize2 = 255, received2;
+    char buffer2[bufsize2];
+	writeData(sd, "start", 6);
+    while(1)
+    {
+        received2 = readData(0, buffer2, bufsize2);
+        writeData(sd, buffer2, received2);
+    }
 }
 
 void clientThread(int sd)
@@ -41,8 +71,8 @@ void clientThread(int sd)
 
 void initGameMap()
 {
-    for(int i=0;i<mapHeight;i++)
-        for(int j=0;j<mapWidth;j++)
+    for(int i=0; i<mapHeight; i++)
+        for(int j=0; j<mapWidth; j++)
             gameMap[i][j]=0;
 }
 
@@ -74,8 +104,8 @@ int main(int argc, char **argv) {
         cd = accept(sd, nullptr, nullptr);
         if(cd>=0 && i<maxPlayersNumber)
         {
-                t[i] = thread(clientThread,cd);
-                i++;
+            t[i] = thread(clientThread,cd);
+            i++;
         }
         if(i==maxPlayersNumber)
         {
