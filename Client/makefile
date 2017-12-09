@@ -4,13 +4,14 @@ BUILDPATH=./build
 OBJPATH=./obj
 CC=g++
 CFLAGS=-g -Wall -pthread -std=c++11
+SFMLFLAGS=-lsfml-graphics -lsfml-window -lsfml-system
 FILENAME=client
 
 all: getobj main putobj
 
 main: 
 	@echo "***** compilation started"
-	$(CC) $(CFLAGS) -o $(BUILDPATH)/$(FILENAME) main.cpp
+	$(CC) $(CFLAGS) $(SFMLFLAGS) -o $(BUILDPATH)/$(FILENAME) main.cpp
 
 getobj:
 	-@mv $(OBJPATH)/*.o . 2>/dev/null
