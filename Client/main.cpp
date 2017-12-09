@@ -15,6 +15,7 @@ const char * ip = "127.0.0.1";
 const int mapWidth = 10;
 const int mapHeight = 10;
 int gameMap[mapWidth][mapHeight];
+int players[mapWidth][mapHeight];
 
 ssize_t readData(int fd, char * buffer, ssize_t buffsize) {
     auto ret = read(fd, buffer, buffsize);
@@ -28,15 +29,32 @@ void writeData(int fd, char * buffer, ssize_t count) {
     if(ret!=count) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, count, ret);
 }
 
-void sfmlWindow()
+void sfmlWindow(int sd)
 {
 	sf::RenderWindow window(sf::VideoMode(500,500),"Bomberman");
 	sf::RectangleShape rectangles[mapWidth][mapHeight];	
+	char keyPressed[10]="null";
     while (window.isOpen())
     {
         sf::Event event;
         while (window.pollEvent(event))
         {
+			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+			{
+				cout<<"left"<<endl;
+				strcpy(keyPressed,"left");
+			}
+			else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+			{
+				cout<<"right"<<endl;
+				strcpy(keyPressed,"right");
+			}
+			if(strcmp(keyPressed,"null")!=0)
+			{
+				writeData(sd,keyPressed,strlen(keyPressed)+1);
+				cout<<sizeof(keyPressed);
+				strcpy(keyPressed,"null");
+			}
             if (event.type == sf::Event::Closed)
                 window.close();
         }
@@ -68,10 +86,10 @@ void clientRead(int sd)
     ssize_t bufsize = 255, received;
     char buffer[bufsize];
 	cout<<"Oczekiwanie na pozostałych graczy\n";
-    while(strcmp(buffer,"start")!=0)
-	    readData(sd, buffer, bufsize);
+	while(strcmp(buffer,"start")!=0)
+    readData(sd, buffer, bufsize);
     cout<<"start gry\n";
-	thread window = thread(sfmlWindow);
+	thread window = thread(sfmlWindow,sd);
     while(1)
     {
         received = readData(sd, buffer, bufsize);

@@ -6,7 +6,7 @@ CC=g++
 CFLAGS=-g -Wall -pthread -std=c++11
 FILENAME=server
 
-all: getobj main putobj
+all: main
 
 main: 
 	@echo "***** compilation started"

@@ -7,10 +7,10 @@ CFLAGS=-g -Wall -pthread -std=c++11
 SFMLFLAGS=-lsfml-graphics -lsfml-window -lsfml-system
 FILENAME=client
 
-all: getobj main putobj
+all: main
 
 main: 
-	@echo "***** compilation started"
+	@echo "***** compilation started *****"
 	$(CC) $(CFLAGS) $(SFMLFLAGS) -o $(BUILDPATH)/$(FILENAME) main.cpp
 
 getobj:

@@ -6,14 +6,17 @@
 #include <unistd.h>
 #include <thread>
 #include <mutex>
-#include<sys/socket.h>
-#include<netinet/in.h>
-#include<arpa/inet.h>
+#include <string>
+#include <cstring>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 using namespace std;
 
 const int mapWidth = 10;
 const int mapHeight = 10;
 int gameMap[mapWidth][mapHeight];
+int players[mapWidth][mapHeight];
 
 const char * serverIp="127.0.0.1";
 const int maxPlayersNumber=2;
@@ -32,28 +35,57 @@ void writeData(int fd, char * buffer, ssize_t count) {
     if(ret!=count) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, count, ret);
 }
 
+void makeMove(int player, char * direction)
+{
+	cout<<"player="<<player<<endl;
+	for(int i=0;i<mapWidth;i++)
+		for(int j=0;j<mapHeight;j++)
+			if(players[i][j]==player)
+			{
+				cout<<"i="<<i<<" j="<<j<<endl;
+				players[i][j]=0;
+				if(strcmp(direction,"left")==0)
+				{
+					players[i][j-1]=player;
+				}
+				else if(strcmp(direction,"right")==0)
+				{
+					players[i][j+1]=player;
+				}
+				break;
+			}
+}
+
 void readThread(int sd)
 {
     while(1)
     {
-        ssize_t bufsize1 = 255, received1;
-        char buffer1[bufsize1];
-        received1 = readData(sd, buffer1, bufsize1);
-        writeData(1, buffer1, received1);
+        ssize_t bufsize = 255, received;
+        char buffer[bufsize];
+        received = readData(sd, buffer, bufsize);
+        //writeData(1, buffer, received);
+		cout<<buffer<<endl;
+		if(strcmp(buffer,"left")==0 || strcmp(buffer,"right")==0)
+		{
+			makeMove(sd,buffer);
+			for(int i=0;i<mapWidth;i++)
+			{
+				for(int j=0;j<mapHeight;j++)
+					cout<<players[i][j];
+				cout<<endl;
+			}
+			strcpy(buffer,"null");
+		}
     }
 }
 
 void writeThread(int sd)
 {
 
-    ssize_t bufsize2 = 255, received2;
-    char buffer2[bufsize2];
+    //ssize_t bufsize2 = 255, received2;
+    //char buffer2[bufsize2];
 	writeData(sd, "start", 6);
-    while(1)
-    {
-        received2 = readData(0, buffer2, bufsize2);
-        writeData(sd, buffer2, received2);
-    }
+	
 }
 
 void clientThread(int sd)
@@ -76,6 +108,13 @@ void initGameMap()
             gameMap[i][j]=0;
 }
 
+void initPlayers()
+{
+    for(int i=0; i<mapHeight; i++)
+        for(int j=0; j<mapWidth; j++)
+            players[i][j]=0;
+}
+
 int main(int argc, char **argv) {
     thread t[maxPlayersNumber];
     int sd=socket(PF_INET,SOCK_STREAM,IPPROTO_TCP);
@@ -85,10 +124,13 @@ int main(int argc, char **argv) {
     saddr.sin_port=htons(2500);
     saddr.sin_addr.s_addr=inet_addr(serverIp);
 
+	const int one = 1;
+	setsockopt(sd,SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
     bind(sd,(sockaddr*) &saddr,sizeof(saddr));
     listen(sd,maxPlayersNumber);
 
     initGameMap();
+	initPlayers();
     /*for(int i=0;i<10;i++)
     {
         for(int j=0;j<10;j++)
@@ -105,6 +147,10 @@ int main(int argc, char **argv) {
         if(cd>=0 && i<maxPlayersNumber)
         {
             t[i] = thread(clientThread,cd);
+			if(i==0)
+				players[0][0]=cd;
+			else if(i==1)
+				players[9][9]=cd;
             i++;
         }
         if(i==maxPlayersNumber)
