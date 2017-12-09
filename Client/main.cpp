@@ -52,7 +52,6 @@ void sfmlWindow(int sd)
 			if(strcmp(keyPressed,"null")!=0)
 			{
 				writeData(sd,keyPressed,strlen(keyPressed)+1);
-				cout<<sizeof(keyPressed);
 				strcpy(keyPressed,"null");
 			}
             if (event.type == sf::Event::Closed)
@@ -90,10 +89,13 @@ void clientRead(int sd)
     readData(sd, buffer, bufsize);
     cout<<"start gry\n";
 	thread window = thread(sfmlWindow,sd);
+	string message;
     while(1)
     {
         received = readData(sd, buffer, bufsize);
         writeData(1, buffer, received);
+		message=buffer;
+		cout<<message<<endl;
     }
 
 }
