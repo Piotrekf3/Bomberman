@@ -23,6 +23,8 @@ const int maxPlayersNumber=2;
 int playerDescriptors[maxPlayersNumber];
 
 mutex gameStart;
+mutex readStart;
+mutex descriptorsMutex[maxPlayersNumber];
 
 class Pair
 {
@@ -58,9 +60,13 @@ void sendMoveToAll(int player,Pair from, Pair to)
     string ty = to_string(to.y);
     snprintf(result,sizeof(result), "%s;%s;%s;%s;%s",splayer.c_str(),
              fx.c_str(),fy.c_str(),tx.c_str(),ty.c_str());
-    cout<<result<<endl;
 	for(int i=0;i<maxPlayersNumber;i++)
-		writeData(playerDescriptors[i],result,strlen(result));
+	{
+		cout<<result<<endl;
+		descriptorsMutex[i].lock();
+		writeData(playerDescriptors[i],result,255);
+		descriptorsMutex[i].unlock();
+	}
 }
 
 Pair getPlayerPosition(int player)
@@ -95,6 +101,9 @@ void makeMove(int player, char * direction)
 
 void readThread(int sd)
 {
+	readStart.lock();
+	readStart.unlock();
+	cout<<"read\n";
     while(1)
     {
         ssize_t bufsize = 255, received;
@@ -118,13 +127,17 @@ void readThread(int sd)
 
 void writeThread(int sd)
 {
-    //ssize_t bufsize2 = 255, received2;
-    //char buffer2[bufsize2];
+    ssize_t bufsize = 255;
+    char buffer[bufsize];
     //start game
-    writeData(sd, "start", 6);
+	strcpy(buffer,"start");
+    writeData(sd, buffer, bufsize);
     //send players positions
     Pair playerPosition = getPlayerPosition(sd);
+	sleep(1);
     sendMoveToAll(sd,playerPosition,playerPosition);
+	sleep(1);
+	readStart.unlock();
 }
 
 void clientThread(int sd)
@@ -180,6 +193,7 @@ int main(int argc, char **argv) {
     int cd;
     int i=0;
     gameStart.lock();
+	readStart.lock();
     while(1)
     {
         cd = accept(sd, nullptr, nullptr);
@@ -190,8 +204,8 @@ int main(int argc, char **argv) {
                 players[0][0]=cd;
             else if(i==1)
                 players[9][9]=cd;
-            i++;
             playerDescriptors[i]=cd;
+			i++;
         }
         if(i==maxPlayersNumber)
         {
