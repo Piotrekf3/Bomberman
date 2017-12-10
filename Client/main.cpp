@@ -31,6 +31,16 @@ public:
     }
 };
 
+void printPlayers()
+{
+	for(int i=0; i<mapWidth;i++)
+	{
+		for(int j=0;j<mapHeight;j++)
+			cout<<players[i][j];
+		cout<<endl;
+	}
+}
+
 ssize_t readData(int fd, char * buffer, ssize_t buffsize) {
     auto ret = read(fd, buffer, buffsize);
     if(ret==-1) error(1,errno, "read failed on descriptor %d", fd);
@@ -90,12 +100,14 @@ void sfmlWindow(int sd)
                 {
                     rectangles[i][j].setFillColor(sf::Color(255,0,0));
                 }
-                window.draw(rectangles[i][j]);
+                //window.draw(rectangles[i][j]);
 				if(players[i][j]!=0)
 				{
+//					cout<<"i="<<i<<"j="<<j<<endl;
+//					cout<<"player="<<player<<endl;
 					playerCircles[player].setRadius(rectangleWidth/2);
 					playerCircles[player].setFillColor(sf::Color(255,255,0));
-					playerCircles[player].setPosition(sf::Vector2f(i*rectangleWidth,j*rectangleHeight));
+					playerCircles[player].setPosition(sf::Vector2f(j*rectangleHeight,i*rectangleWidth));
 					window.draw(playerCircles[player]);
 					player++;
 				}
@@ -108,7 +120,7 @@ void makeMove(int player,Pair from,Pair to)
 {
     players[from.x][from.y]=0;
     players[to.x][to.y]=player;
-	cout<<players[to.x][to.y]<<endl;
+	printPlayers();
 }
 
 void clientRead(int sd)

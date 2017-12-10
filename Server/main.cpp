@@ -91,13 +91,14 @@ void makeMove(int player, char * direction)
     if(strcmp(direction,"left")==0)
     {
         players[i][j-1]=player;
+		sendMoveToAll(player,Pair(i,j),Pair(i,j-1));
     }
     else if(strcmp(direction,"right")==0)
     {
         players[i][j+1]=player;
+		sendMoveToAll(player,Pair(i,j),Pair(i,j+1));
     }
 }
-
 
 void readThread(int sd)
 {
@@ -106,9 +107,9 @@ void readThread(int sd)
 	cout<<"read\n";
     while(1)
     {
-        ssize_t bufsize = 255, received;
+        ssize_t bufsize = 255;
         char buffer[bufsize];
-        received = readData(sd, buffer, bufsize);
+        readData(sd, buffer, bufsize);
         //writeData(1, buffer, received);
         cout<<buffer<<endl;
         if(strcmp(buffer,"left")==0 || strcmp(buffer,"right")==0)
