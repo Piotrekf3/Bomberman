@@ -74,6 +74,16 @@ void sfmlWindow(int sd)
                 cout<<"right"<<endl;
                 strcpy(keyPressed,"right");
             }
+			else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+			{
+				cout<<"down"<<endl;
+				strcpy(keyPressed,"down");
+			}
+			else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+			{
+				cout<<"up"<<endl;
+				strcpy(keyPressed,"up");
+			}
             if(strcmp(keyPressed,"null")!=0)
             {
                 writeData(sd,keyPressed,strlen(keyPressed)+1);
@@ -91,7 +101,7 @@ void sfmlWindow(int sd)
             for(int j=0; j<mapHeight; j++)
             {
                 rectangles[i][j].setSize(sf::Vector2f(rectangleWidth,rectangleHeight));
-                rectangles[i][j].setPosition(sf::Vector2f(i*rectangleWidth,j*rectangleHeight));
+                rectangles[i][j].setPosition(sf::Vector2f(j*rectangleHeight,i*rectangleWidth));
                 if(gameMap[i][j]==0)
                 {
                     rectangles[i][j].setFillColor(sf::Color(0,255,0));
@@ -100,7 +110,7 @@ void sfmlWindow(int sd)
                 {
                     rectangles[i][j].setFillColor(sf::Color(255,0,0));
                 }
-                //window.draw(rectangles[i][j]);
+                window.draw(rectangles[i][j]);
 				if(players[i][j]!=0)
 				{
 //					cout<<"i="<<i<<"j="<<j<<endl;

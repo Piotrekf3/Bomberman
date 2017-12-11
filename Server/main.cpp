@@ -79,6 +79,36 @@ Pair getPlayerPosition(int player)
         }
     return Pair(0,0);
 }
+bool validateMove(int player, char * direction)
+{
+	Pair position = getPlayerPosition(player);
+	string dir = direction;
+	if(dir=="left" && (position.y-1) >= 0 && players[position.x][position.y-1]==0)
+	{
+		cout<<"true"<<endl;
+		return true;
+	}
+	else if(dir=="right" && (position.y+1)<10 && players[position.x][position.y+1]==0)
+	{
+		cout<<"true"<<endl;
+		return true;
+	}
+	else if(dir=="up" && (position.x-1)>=0 && players[position.x-1][position.y]==0)
+	{
+		cout<<"true"<<endl;
+		return true;
+	}
+	else if(dir=="down" && (position.x+1)<10 && players[position.x+1][position.y]==0)
+	{
+		cout<<"true"<<endl;
+		return true;
+	}
+	else
+	{
+		cout<<"false"<<endl;
+		return false;
+	}
+}
 
 void makeMove(int player, char * direction)
 {
@@ -87,6 +117,8 @@ void makeMove(int player, char * direction)
     int i = position.x;
     int j = position.y;
     cout<<"i="<<i<<" j="<<j<<endl;
+	if(!validateMove(player,direction))
+		return;
     players[i][j]=0;
     if(strcmp(direction,"left")==0)
     {
@@ -97,6 +129,16 @@ void makeMove(int player, char * direction)
     {
         players[i][j+1]=player;
 		sendMoveToAll(player,Pair(i,j),Pair(i,j+1));
+    }
+    else if(strcmp(direction,"up")==0)
+    {
+        players[i-1][j]=player;
+		sendMoveToAll(player,Pair(i,j),Pair(i-1,j));
+    }
+    else if(strcmp(direction,"down")==0)
+    {
+        players[i+1][j]=player;
+		sendMoveToAll(player,Pair(i,j),Pair(i+1,j));
     }
 }
 
@@ -112,7 +154,8 @@ void readThread(int sd)
         readData(sd, buffer, bufsize);
         //writeData(1, buffer, received);
         cout<<buffer<<endl;
-        if(strcmp(buffer,"left")==0 || strcmp(buffer,"right")==0)
+        if(strcmp(buffer,"left")==0 || strcmp(buffer,"right")==0
+				|| strcmp(buffer,"up") || strcmp(buffer,"down"))
         {
             makeMove(sd,buffer);
             for(int i=0; i<mapWidth; i++)
