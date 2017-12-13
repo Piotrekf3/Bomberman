@@ -11,6 +11,7 @@
 #include <mutex>
 #include <string>
 #include <cstring>
+
 #include "Pair.h"
 
 using namespace std;
@@ -29,9 +30,8 @@ private:
 	int players[mapWidth][mapHeight];
 	int playerDescriptors[maxPlayersNumber];
 
-    thread t[maxPlayersNumber];
+    thread t[maxPlayersNumber*2];
 
-	mutex gameStart;
 	mutex readStart;
 	mutex descriptorsMutex[maxPlayersNumber];
 
@@ -51,10 +51,7 @@ private:
 	void initPlayers();
 
 public:
-	Game()
-	{
-		cout<<"konstruktor"<<endl;
-	}
+	Game(int descriptors[]);
 };
 
 #endif

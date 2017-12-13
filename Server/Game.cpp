@@ -14,7 +14,6 @@ void Game::writeData(int fd,const char * buffer, ssize_t count) {
     if(ret!=count) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, count, ret);
 }
 
-
 void Game::sendMoveToAll(int player,Pair from, Pair to)
 {
     char result[40];
@@ -161,4 +160,30 @@ void Game::writeThread(int sd)
     sendMoveToAll(sd,playerPosition,playerPosition);
 	sleep(1);
 	readStart.unlock();
+}
+
+Game::Game(int descriptors[])
+{
+	readStart.lock();
+	initGameMap();
+	initPlayers();
+	for(int i=0;i<maxPlayersNumber;i++)
+		this->playerDescriptors[i] = descriptors[i];
+	for(int i=0; i<maxPlayersNumber; i++)
+	{
+		if(i==0)
+			players[0][0]=playerDescriptors[i];
+		else if(i==1)
+			players[mapWidth][mapHeight]=playerDescriptors[i];
+		else if(i==2)
+			players[0][mapHeight]=playerDescriptors[i];
+		else if(i==3)
+			players[mapWidth][0]=playerDescriptors[i];
+	}
+	for(int i=0,j=0;i<maxPlayersNumber;i++,j+=2)
+	{
+		t[j] = thread(this::readThread,playerDescriptors[i]);
+		t[j+1] = thread(this::writeThread,playerDescriptors[i]);
+	}
+	
 }

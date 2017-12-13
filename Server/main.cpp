@@ -231,8 +231,6 @@ int main(int argc, char **argv) {
     bind(sd,(sockaddr*) &saddr,sizeof(saddr));
     listen(sd,maxPlayersNumber);
 
-    initGameMap();
-    initPlayers();
     /*for(int i=0;i<10;i++)
     {
         for(int j=0;j<10;j++)
@@ -242,18 +240,11 @@ int main(int argc, char **argv) {
 
     int cd;
     int i=0;
-    gameStart.lock();
-	readStart.lock();
     while(1)
     {
         cd = accept(sd, nullptr, nullptr);
         if(cd>=0 && i<maxPlayersNumber)
         {
-            t[i] = thread(clientThread,cd);
-            if(i==0)
-                players[0][0]=cd;
-            else if(i==1)
-                players[9][9]=cd;
             playerDescriptors[i]=cd;
 			i++;
         }
