@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "Game.h"
 using namespace std;
 
 const int mapWidth = 10;
@@ -37,6 +38,7 @@ public:
         this->y = y;
     }
 };
+
 
 ssize_t readData(int fd, char * buffer, ssize_t buffsize) {
     auto ret = read(fd, buffer, buffsize);
