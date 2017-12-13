@@ -11,7 +11,7 @@ all: main
 
 main: 
 	@echo "***** compilation started *****"
-	$(CC) $(CFLAGS) $(SFMLFLAGS) -o $(BUILDPATH)/$(FILENAME) main.cpp
+	$(CC) $(CFLAGS) -o $(BUILDPATH)/$(FILENAME) main.cpp $(SFMLFLAGS)
 
 getobj:
 	-@mv $(OBJPATH)/*.o . 2>/dev/null

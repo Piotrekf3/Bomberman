@@ -18,7 +18,7 @@ const int mapHeight = 10;
 int gameMap[mapWidth][mapHeight];
 int players[mapWidth][mapHeight];
 
-const char * serverIp="127.0.0.1";
+const char * serverIp="192.168.0.19";
 const int maxPlayersNumber=2;
 int playerDescriptors[maxPlayersNumber];
 
@@ -44,12 +44,14 @@ ssize_t readData(int fd, char * buffer, ssize_t buffsize) {
     return ret;
 }
 
-void writeData(int fd, char * buffer, ssize_t count) {
+void writeData(int fd,const char * buffer, ssize_t count) {
     auto ret = write(fd, buffer, count);
     if(ret==-1) error(1, errno, "write failed on descriptor %d", fd);
     if(ret!=count) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, count, ret);
 }
 
+//wysyla ruch do wszystkich graczy
+//mozna zmienic na string
 void sendMoveToAll(int player,Pair from, Pair to)
 {
     char result[40];
@@ -62,13 +64,31 @@ void sendMoveToAll(int player,Pair from, Pair to)
              fx.c_str(),fy.c_str(),tx.c_str(),ty.c_str());
 	for(int i=0;i<maxPlayersNumber;i++)
 	{
-		cout<<result<<endl;
 		descriptorsMutex[i].lock();
 		writeData(playerDescriptors[i],result,255);
 		descriptorsMutex[i].unlock();
 	}
 }
 
+//przesyla zmianę na mapie do graczy
+void sendMapChange(int sd, Pair where, int value)
+{
+		string buffer;
+		buffer = to_string(where.x) + ";" + to_string(where.y) + ";" + to_string(value);
+		cout<<buffer<<endl;
+		writeData(sd ,buffer.c_str(), 255);
+}
+
+void sendGameMap(int sd)
+{
+	for(int i=0;i<mapWidth;i++)
+		for(int j=0;j<mapHeight;j++)
+		{
+			sendMapChange(sd,Pair(i,j),gameMap[i][j]);
+		}
+}
+
+//zwraca pozycje gracza na planszy
 Pair getPlayerPosition(int player)
 {
     for(int i=0; i<mapWidth; i++)
@@ -79,44 +99,42 @@ Pair getPlayerPosition(int player)
         }
     return Pair(0,0);
 }
+
 bool validateMove(int player, char * direction)
 {
 	Pair position = getPlayerPosition(player);
 	string dir = direction;
-	if(dir=="left" && (position.y-1) >= 0 && players[position.x][position.y-1]==0)
+	if(dir=="left" && (position.y-1) >= 0 && players[position.x][position.y-1]==0
+			&& gameMap[position.x][position.y-1]==0)
 	{
-		cout<<"true"<<endl;
 		return true;
 	}
-	else if(dir=="right" && (position.y+1)<10 && players[position.x][position.y+1]==0)
+	else if(dir=="right" && (position.y+1)<10 && players[position.x][position.y+1]==0
+			&& gameMap[position.x][position.y+1]==0)
 	{
-		cout<<"true"<<endl;
 		return true;
 	}
-	else if(dir=="up" && (position.x-1)>=0 && players[position.x-1][position.y]==0)
+	else if(dir=="up" && (position.x-1)>=0 && players[position.x-1][position.y]==0
+			&& gameMap[position.x-1][position.y]==0)
 	{
-		cout<<"true"<<endl;
 		return true;
 	}
-	else if(dir=="down" && (position.x+1)<10 && players[position.x+1][position.y]==0)
+	else if(dir=="down" && (position.x+1)<10 && players[position.x+1][position.y]==0
+			&& gameMap[position.x+1][position.y]==0)
 	{
-		cout<<"true"<<endl;
 		return true;
 	}
 	else
 	{
-		cout<<"false"<<endl;
 		return false;
 	}
 }
 
 void makeMove(int player, char * direction)
 {
-    cout<<"player="<<player<<endl;
     Pair position = getPlayerPosition(player);
     int i = position.x;
     int j = position.y;
-    cout<<"i="<<i<<" j="<<j<<endl;
 	if(!validateMove(player,direction))
 		return;
     players[i][j]=0;
@@ -146,24 +164,22 @@ void readThread(int sd)
 {
 	readStart.lock();
 	readStart.unlock();
-	cout<<"read\n";
     while(1)
     {
         ssize_t bufsize = 255;
         char buffer[bufsize];
         readData(sd, buffer, bufsize);
-        //writeData(1, buffer, received);
         cout<<buffer<<endl;
         if(strcmp(buffer,"left")==0 || strcmp(buffer,"right")==0
 				|| strcmp(buffer,"up") || strcmp(buffer,"down"))
         {
             makeMove(sd,buffer);
-            for(int i=0; i<mapWidth; i++)
+ /*           for(int i=0; i<mapWidth; i++)
             {
                 for(int j=0; j<mapHeight; j++)
                     cout<<players[i][j];
                 cout<<endl;
-            }
+            }*/
             strcpy(buffer,"null");
         }
     }
@@ -176,9 +192,10 @@ void writeThread(int sd)
     //start game
 	strcpy(buffer,"start");
     writeData(sd, buffer, bufsize);
+	sleep(1);
+	sendGameMap(sd);
     //send players positions
     Pair playerPosition = getPlayerPosition(sd);
-	sleep(1);
     sendMoveToAll(sd,playerPosition,playerPosition);
 	sleep(1);
 	readStart.unlock();
@@ -202,6 +219,7 @@ void initGameMap()
     for(int i=0; i<mapHeight; i++)
         for(int j=0; j<mapWidth; j++)
             gameMap[i][j]=0;
+	gameMap[1][2]=1;
 }
 
 void initPlayers()
