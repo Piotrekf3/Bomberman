@@ -3,19 +3,24 @@
 BUILDPATH=./build
 OBJPATH=./obj
 CC=g++
-CFLAGS=-g -Wall -pthread -std=c++11
+CFLAGS= -g -c -Wall -pthread -std=c++11
+LDFLAGS= -pthread
 FILENAME=server
 
-all: main
+all: getobj exe putobj
 
-main: 
-	@echo "***** compilation started"
-	$(CC) $(CFLAGS) -o $(BUILDPATH)/$(FILENAME) main.cpp
+exe: main.o Game.o
+	$(CC) $(LDFLAGS) -o $(BUILDPATH)/$(FILENAME) main.o Game.o
+
+main.o: main.cpp 
+	$(CC) $(CFLAGS) main.cpp
 
 getobj:
 	-@mv $(OBJPATH)/*.o . 2>/dev/null
 putobj:
 	-@mv *.o $(OBJPATH) 2>/dev/null
+Game.o: Game.cpp Game.h
+	$(CC) $(CFLAGS) Game.cpp  
 run:
 	$(BUILDPATH)/$(FILENAME)
 init:
