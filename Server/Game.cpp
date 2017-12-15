@@ -36,7 +36,7 @@ void Game::sendMapChange(int sd, Pair where, int value)
 {
 		string buffer;
 		buffer = to_string(where.x) + ";" + to_string(where.y) + ";" + to_string(value);
-		cout<<buffer<<endl;
+//		cout<<buffer<<endl;
 		writeData(sd ,buffer.c_str(), 255);
 }
 
@@ -121,45 +121,57 @@ void Game::makeMove(int player, char * direction)
     }
 }
 
-void Game::readThread(int sd)
+void Game::initGameMap()
+{
+    for(int i=0; i<mapHeight; i++)
+        for(int j=0; j<mapWidth; j++)
+            gameMap[i][j]=0;
+	gameMap[1][2]=1;
+}
+
+void Game::initPlayers()
+{
+    for(int i=0; i<mapHeight; i++)
+        for(int j=0; j<mapWidth; j++)
+            players[i][j]=0;
+}
+
+void Game::readThread(int playerNumber)
 {
 	readStart.lock();
 	readStart.unlock();
-    while(1)
+	cout<<"threadStop["<<playerNumber<<"]="<<threadStop[playerNumber]<<endl;
+    while(!threadStop[playerNumber])
     {
+		cout<<"reading"<<endl;
         ssize_t bufsize = 255;
         char buffer[bufsize];
-        readData(sd, buffer, bufsize);
+        readData(playerDescriptors[playerNumber], buffer, bufsize);
         cout<<buffer<<endl;
         if(strcmp(buffer,"left")==0 || strcmp(buffer,"right")==0
 				|| strcmp(buffer,"up") || strcmp(buffer,"down"))
         {
-            makeMove(sd,buffer);
- /*           for(int i=0; i<mapWidth; i++)
-            {
-                for(int j=0; j<mapHeight; j++)
-                    cout<<players[i][j];
-                cout<<endl;
-            }*/
+            makeMove(playerNumber,buffer);
             strcpy(buffer,"null");
         }
     }
 }
 
-void Game::writeThread(int sd)
+void Game::writeThread(int playerNumber)
 {
     ssize_t bufsize = 255;
     char buffer[bufsize];
     //start game
 	strcpy(buffer,"start");
-    writeData(sd, buffer, bufsize);
+    writeData(playerDescriptors[playerNumber], buffer, bufsize);
 	sleep(1);
-	sendGameMap(sd);
+	sendGameMap(playerDescriptors[playerNumber]);
     //send players positions
-    Pair playerPosition = getPlayerPosition(sd);
-    sendMoveToAll(sd,playerPosition,playerPosition);
+    Pair playerPosition = getPlayerPosition(playerDescriptors[playerNumber]);
+    sendMoveToAll(playerDescriptors[playerNumber],playerPosition,playerPosition);
 	sleep(1);
 	readStart.unlock();
+	while(!threadStop[playerNumber]);
 }
 
 Game::Game(int descriptors[])
@@ -171,19 +183,40 @@ Game::Game(int descriptors[])
 		this->playerDescriptors[i] = descriptors[i];
 	for(int i=0; i<maxPlayersNumber; i++)
 	{
+		threadStop[i]=false;
 		if(i==0)
 			players[0][0]=playerDescriptors[i];
 		else if(i==1)
-			players[mapWidth][mapHeight]=playerDescriptors[i];
+			players[mapWidth-1][mapHeight-1]=playerDescriptors[i];
 		else if(i==2)
-			players[0][mapHeight]=playerDescriptors[i];
+			players[0][mapHeight-1]=playerDescriptors[i];
 		else if(i==3)
-			players[mapWidth][0]=playerDescriptors[i];
+			players[mapWidth-1][0]=playerDescriptors[i];
 	}
-	for(int i=0,j=0;i<maxPlayersNumber;i++,j+=2)
+}
+
+Game::~Game()
+{
+	cout<<"end of game"<<endl;
+	for(int i=0,j=0;j<maxPlayersNumber;i+=2,j++)
 	{
-		t[j] = thread(this::readThread,playerDescriptors[i]);
-		t[j+1] = thread(this::writeThread,playerDescriptors[i]);
+		threadStop[j]=true;
+		if(t[i].joinable())
+			t[i].join();
+		if(t[i+1].joinable())
+			t[i+1].join();
+		close(playerDescriptors[j]);
 	}
-	
+}
+
+void Game::start()
+{
+//	t[0] = thread(&Game::writeThread,this,0);
+//	t[1] = thread(&Game::writeThread,this,1);
+	for(int i=0, j=0;j<maxPlayersNumber;i+=2,j++)
+	{
+		cout<<"i="<<i<<" j="<<j<<endl;
+		t[i] = thread(&Game::writeThread,this,j);
+		t[i+1] = thread(&Game::readThread,this,j);
+	}
 }

@@ -9,7 +9,7 @@ FILENAME=client
 
 all: main
 
-main: 
+main: main.cpp 
 	@echo "***** compilation started *****"
 	$(CC) $(CFLAGS) -o $(BUILDPATH)/$(FILENAME) main.cpp $(SFMLFLAGS)
 

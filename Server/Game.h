@@ -30,6 +30,7 @@ private:
 	int players[mapWidth][mapHeight];
 	int playerDescriptors[maxPlayersNumber];
 
+	bool threadStop[maxPlayersNumber];
     thread t[maxPlayersNumber*2];
 
 	mutex readStart;
@@ -52,6 +53,10 @@ private:
 
 public:
 	Game(int descriptors[]);
+	~Game();
+	void start();
+	static const char * getServerIp(){return serverIp;};
+	static int getMaxPlayersNumber() {return maxPlayersNumber;};
 };
 
 #endif

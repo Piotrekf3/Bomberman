@@ -12,7 +12,7 @@
 #include <SFML/Graphics.hpp>
 using namespace std;
 
-const char * ip = "192.168.0.19";
+const char * ip = "127.0.0.1";
 const int maxPlayersNumber=2;
 const int mapWidth = 10;
 const int mapHeight = 10;
@@ -88,6 +88,7 @@ void sfmlWindow(int sd)
             if(strcmp(keyPressed,"null")!=0)
             {
                 writeData(sd,keyPressed,strlen(keyPressed)+1);
+				cout<<"Pressed="<<keyPressed<<endl;
                 strcpy(keyPressed,"null");
             }
             if (event.type == sf::Event::Closed)
