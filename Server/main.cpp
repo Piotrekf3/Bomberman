@@ -53,6 +53,7 @@ int main(int argc, char **argv) {
     int i=0;
     while(1)
     {
+		cout<<"i="<<i<<endl;
         cd = accept(sd, nullptr, nullptr);
         if(cd>=0 && i<Game::getMaxPlayersNumber())
         {

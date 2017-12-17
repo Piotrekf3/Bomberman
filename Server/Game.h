@@ -31,9 +31,8 @@ private:
 	int playerDescriptors[maxPlayersNumber];
 
 	bool threadStop[maxPlayersNumber];
-    thread t[maxPlayersNumber*2];
+    thread t[maxPlayersNumber];
 
-	mutex readStart;
 	mutex descriptorsMutex[maxPlayersNumber];
 
 	//methods
@@ -46,8 +45,7 @@ private:
 	Pair getPlayerPosition(int player);
 	bool validateMove(int player, char * direction);
 	void makeMove(int player, char * direction);
-	void readThread(int sd);
-	void writeThread(int sd);
+	void clientThread(int sd);
 	void initGameMap();
 	void initPlayers();
 

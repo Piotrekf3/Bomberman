@@ -136,29 +136,9 @@ void Game::initPlayers()
             players[i][j]=0;
 }
 
-void Game::readThread(int playerNumber)
+void Game::clientThread(int playerNumber)
 {
-	readStart.lock();
-	readStart.unlock();
-	cout<<"threadStop["<<playerNumber<<"]="<<threadStop[playerNumber]<<endl;
-    while(!threadStop[playerNumber])
-    {
-		cout<<"reading"<<endl;
-        ssize_t bufsize = 255;
-        char buffer[bufsize];
-        readData(playerDescriptors[playerNumber], buffer, bufsize);
-        cout<<buffer<<endl;
-        if(strcmp(buffer,"left")==0 || strcmp(buffer,"right")==0
-				|| strcmp(buffer,"up") || strcmp(buffer,"down"))
-        {
-            makeMove(playerNumber,buffer);
-            strcpy(buffer,"null");
-        }
-    }
-}
-
-void Game::writeThread(int playerNumber)
-{
+	cout<<playerNumber<<endl;
     ssize_t bufsize = 255;
     char buffer[bufsize];
     //start game
@@ -170,13 +150,24 @@ void Game::writeThread(int playerNumber)
     Pair playerPosition = getPlayerPosition(playerDescriptors[playerNumber]);
     sendMoveToAll(playerDescriptors[playerNumber],playerPosition,playerPosition);
 	sleep(1);
-	readStart.unlock();
-	while(!threadStop[playerNumber]);
+
+    while(!threadStop[playerNumber])
+    {
+		cout<<"reading"<<endl;
+		cout<<"threadStop"<<threadStop[playerNumber]<<endl;
+        readData(playerDescriptors[playerNumber], buffer, bufsize);
+        cout<<buffer<<endl;
+        if(strcmp(buffer,"left")==0 || strcmp(buffer,"right")==0
+				|| strcmp(buffer,"up") || strcmp(buffer,"down"))
+        {
+            makeMove(playerDescriptors[playerNumber],buffer);
+            strcpy(buffer,"null");
+        }
+    }
 }
 
 Game::Game(int descriptors[])
 {
-	readStart.lock();
 	initGameMap();
 	initPlayers();
 	for(int i=0;i<maxPlayersNumber;i++)
@@ -198,25 +189,20 @@ Game::Game(int descriptors[])
 Game::~Game()
 {
 	cout<<"end of game"<<endl;
-	for(int i=0,j=0;j<maxPlayersNumber;i+=2,j++)
+	for(int i=0;i<1;i++)
 	{
-		threadStop[j]=true;
+		threadStop[i]=true;
 		if(t[i].joinable())
 			t[i].join();
-		if(t[i+1].joinable())
-			t[i+1].join();
-		close(playerDescriptors[j]);
+		close(playerDescriptors[i]);
 	}
+
 }
 
 void Game::start()
 {
-//	t[0] = thread(&Game::writeThread,this,0);
-//	t[1] = thread(&Game::writeThread,this,1);
-	for(int i=0, j=0;j<maxPlayersNumber;i+=2,j++)
+	for(int i=0;i<1;i++)
 	{
-		cout<<"i="<<i<<" j="<<j<<endl;
-		t[i] = thread(&Game::writeThread,this,j);
-		t[i+1] = thread(&Game::readThread,this,j);
+		t[i] = thread(&Game::clientThread,this,i);
 	}
 }
