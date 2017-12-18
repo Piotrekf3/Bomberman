@@ -8,6 +8,7 @@
 #include <mutex>
 #include <string>
 #include <cstring>
+#include <vector>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -40,16 +41,11 @@ int main(int argc, char **argv) {
     bind(sd,(sockaddr*) &saddr,sizeof(saddr));
     listen(sd,Game::getMaxPlayersNumber());
 
-    /*for(int i=0;i<10;i++)
-    {
-        for(int j=0;j<10;j++)
-            cout<<gameMap[i][j];
-        cout<<endl;
-    }*/
+	//tablica gier
+	vector <unique_ptr<Game>> games;
+	int playerDescriptors[Game::getMaxPlayersNumber()];
 
     int cd;
-	int playerDescriptors[Game::getMaxPlayersNumber()];
-	cout<<Game::getMaxPlayersNumber()<<endl;
     int i=0;
     while(1)
     {
@@ -65,8 +61,7 @@ int main(int argc, char **argv) {
         {
             //start gry
 			cout<<"start gry\n";
-			Game game(playerDescriptors);
-			game.start();
+			games.push_back(unique_ptr<Game>(new Game(playerDescriptors)));
 			i=0;
         }
     }

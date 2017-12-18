@@ -52,7 +52,6 @@ private:
 public:
 	Game(int descriptors[]);
 	~Game();
-	void start();
 	static const char * getServerIp(){return serverIp;};
 	static int getMaxPlayersNumber() {return maxPlayersNumber;};
 };

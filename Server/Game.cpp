@@ -168,6 +168,7 @@ void Game::clientThread(int playerNumber)
 
 Game::Game(int descriptors[])
 {
+	cout<<"konstruktor"<<endl;
 	initGameMap();
 	initPlayers();
 	for(int i=0;i<maxPlayersNumber;i++)
@@ -184,6 +185,10 @@ Game::Game(int descriptors[])
 		else if(i==3)
 			players[mapWidth-1][0]=playerDescriptors[i];
 	}
+	for(int i=0; i<maxPlayersNumber;i++)
+	{
+		t[i] = thread(&Game::clientThread,this,i);
+	}
 }
 
 Game::~Game()
@@ -197,12 +202,4 @@ Game::~Game()
 		close(playerDescriptors[i]);
 	}
 
-}
-
-void Game::start()
-{
-	for(int i=0;i<1;i++)
-	{
-		t[i] = thread(&Game::clientThread,this,i);
-	}
 }
