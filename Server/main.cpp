@@ -30,6 +30,10 @@ void writeData(int fd,const char * buffer, ssize_t count) {
 
 
 int main(int argc, char **argv) {
+
+	//wczytanie konfiguracji
+//	Game::loadConfig();
+
     int sd=socket(PF_INET,SOCK_STREAM,IPPROTO_TCP);
     sockaddr_in saddr;
     saddr.sin_family=AF_INET;

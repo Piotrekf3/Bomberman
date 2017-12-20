@@ -1,6 +1,8 @@
 #include "Game.h"
-const char* Game::serverIp = "127.0.0.1"; 
-
+char* Game::serverIp = "127.0.0.1"; 
+int Game::mapWidth=10;
+int Game::mapHeight=10;
+int Game::maxPlayersNumber=2;
 
 ssize_t Game::readData(int fd, char * buffer, ssize_t buffsize) {
     auto ret = read(fd, buffer, buffsize);
@@ -36,7 +38,6 @@ void Game::sendMapChange(int sd, Pair where, int value)
 {
 		string buffer;
 		buffer = to_string(where.x) + ";" + to_string(where.y) + ";" + to_string(value);
-//		cout<<buffer<<endl;
 		writeData(sd ,buffer.c_str(), 255);
 }
 
@@ -166,8 +167,14 @@ void Game::clientThread(int playerNumber)
     }
 }
 
-Game::Game(int descriptors[])
+Game::Game(int descriptors[]) : gameMap(mapWidth, vector<int>(mapHeight)),
+	players(mapWidth, vector<int>(mapHeight)),
+	playerDescriptors(maxPlayersNumber),
+	threadStop(maxPlayersNumber),
+	t(maxPlayersNumber),
+	descriptorsMutex(maxPlayersNumber)	
 {
+	cout<<"thread="<<threadStop[0]<<endl;
 	cout<<"konstruktor"<<endl;
 	initGameMap();
 	initPlayers();
@@ -202,4 +209,12 @@ Game::~Game()
 		close(playerDescriptors[i]);
 	}
 
+}
+
+void Game::loadConfig()
+{
+	mapWidth=10;
+	mapHeight=10;
+	strcpy(serverIp,"127.0.0.1");
+	maxPlayersNumber=2;
 }

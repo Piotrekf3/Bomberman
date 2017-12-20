@@ -11,6 +11,8 @@
 #include <mutex>
 #include <string>
 #include <cstring>
+#include <vector>
+#include <atomic>
 
 #include "Pair.h"
 
@@ -20,20 +22,21 @@ class Game
 {
 private:
 	//static
-	const static int mapWidth = 10;
-	const static int mapHeight = 10;
-	const static char* serverIp;
-	const static int maxPlayersNumber = 2;
+//	const static char * configFile="config";
+	static int mapWidth;
+	static int mapHeight;
+	static char* serverIp;
+	static int maxPlayersNumber;
 	
 	//variables
-	int gameMap[mapWidth][mapHeight];
-	int players[mapWidth][mapHeight];
-	int playerDescriptors[maxPlayersNumber];
+	vector<vector<int>> gameMap;
+	vector<vector<int>> players;
+	vector<int> playerDescriptors;
 
-	bool threadStop[maxPlayersNumber];
-    thread t[maxPlayersNumber];
+	vector<atomic<bool>> threadStop;
+    vector<thread> t;
 
-	mutex descriptorsMutex[maxPlayersNumber];
+	vector<mutex> descriptorsMutex;
 
 	//methods
 	ssize_t readData(int fd, char * buffer, ssize_t buffsize);
@@ -52,6 +55,7 @@ private:
 public:
 	Game(int descriptors[]);
 	~Game();
+	static void loadConfig();
 	static const char * getServerIp(){return serverIp;};
 	static int getMaxPlayersNumber() {return maxPlayersNumber;};
 };
