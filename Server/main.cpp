@@ -32,8 +32,8 @@ void writeData(int fd,const char * buffer, ssize_t count) {
 int main(int argc, char **argv) {
 
 	//wczytanie konfiguracji
-//	Game::loadConfig();
-
+	Game::loadConfig();
+	cout<<Game::getServerIp()<<endl;
     int sd=socket(PF_INET,SOCK_STREAM,IPPROTO_TCP);
     sockaddr_in saddr;
     saddr.sin_family=AF_INET;
@@ -53,7 +53,6 @@ int main(int argc, char **argv) {
     int i=0;
     while(1)
     {
-		cout<<"i="<<i<<endl;
         cd = accept(sd, nullptr, nullptr);
         if(cd>=0 && i<Game::getMaxPlayersNumber())
         {

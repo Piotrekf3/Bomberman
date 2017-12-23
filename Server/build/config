@@ -1,0 +1,4 @@
+mapWidth=15
+mapHeight=15
+maxPlayersNumber=2
+serverIp=127.0.0.1

@@ -13,6 +13,7 @@
 #include <cstring>
 #include <vector>
 #include <atomic>
+#include <fstream>
 
 #include "Pair.h"
 
@@ -22,10 +23,10 @@ class Game
 {
 private:
 	//static
-//	const static char * configFile="config";
+	const static string configFile;
 	static int mapWidth;
 	static int mapHeight;
-	static char* serverIp;
+	static char * serverIp;
 	static int maxPlayersNumber;
 	
 	//variables
@@ -56,8 +57,9 @@ public:
 	Game(int descriptors[]);
 	~Game();
 	static void loadConfig();
-	static const char * getServerIp(){return serverIp;};
+	static const char * getServerIp(){return const_cast<char*>(serverIp);};
 	static int getMaxPlayersNumber() {return maxPlayersNumber;};
+	static string getExecutablePath();
 };
 
 #endif
