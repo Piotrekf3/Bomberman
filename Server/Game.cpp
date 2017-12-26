@@ -4,7 +4,7 @@
 const string Game::configFile = Game::getExecutablePath() + "config";
 
 //default config
-char * Game::serverIp = const_cast<char*>("192.168.1.11");
+string Game::serverIp = "127.0.0.1";
 int Game::mapWidth=10;
 int Game::mapHeight=10;
 int Game::maxPlayersNumber=2;
@@ -179,7 +179,6 @@ Game::Game(int descriptors[]) : gameMap(mapWidth, vector<int>(mapHeight)),
     t(maxPlayersNumber),
     descriptorsMutex(maxPlayersNumber)
 {
-    cout<<"thread="<<threadStop[0]<<endl;
     cout<<"konstruktor"<<endl;
     initGameMap();
     initPlayers();
@@ -237,11 +236,11 @@ void Game::loadConfig()
 					Game::mapWidth=value;
                 else if(name=="mapHeight")
 					Game::mapHeight=value;
-				/*else if(name=="serverIp")
+				else if(name=="serverIp")
 				{
-					Game::serverIp=const_cast<char*>(strValue.c_str());
+					Game::serverIp=strValue;
 					cout<<Game::serverIp<<endl;
-				}*/
+				}
             }
             else
                 cout<<"Invalid line "<<i<<" in config file\n";
@@ -253,11 +252,6 @@ void Game::loadConfig()
     else
         cout<<"Failed to load config\n"<<
             "Starting with default settings\n";
-
-    /*	Game::mapWidth=10;
-    	Game::mapHeight=10;
-    	Game::serverIp=const_cast<char*>("127.0.0.1");
-    	Game::maxPlayersNumber=2;*/
 }
 
 string Game::getExecutablePath()

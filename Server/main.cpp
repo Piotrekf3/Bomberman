@@ -33,12 +33,11 @@ int main(int argc, char **argv) {
 
 	//wczytanie konfiguracji
 	Game::loadConfig();
-	cout<<Game::getServerIp()<<endl;
     int sd=socket(PF_INET,SOCK_STREAM,IPPROTO_TCP);
     sockaddr_in saddr;
     saddr.sin_family=AF_INET;
     saddr.sin_port=htons(2500);
-    saddr.sin_addr.s_addr=inet_addr(Game::getServerIp());
+    saddr.sin_addr.s_addr=inet_addr(Game::getServerIp().c_str());
 
     const int one = 1;
     setsockopt(sd,SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));

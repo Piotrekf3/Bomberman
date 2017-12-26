@@ -14,7 +14,6 @@
 #include <vector>
 #include <atomic>
 #include <fstream>
-
 #include "Pair.h"
 
 using namespace std;
@@ -26,7 +25,7 @@ private:
 	const static string configFile;
 	static int mapWidth;
 	static int mapHeight;
-	static char * serverIp;
+	static string serverIp;
 	static int maxPlayersNumber;
 	
 	//variables
@@ -57,8 +56,8 @@ public:
 	Game(int descriptors[]);
 	~Game();
 	static void loadConfig();
-	static const char * getServerIp(){return const_cast<char*>(serverIp);};
 	static int getMaxPlayersNumber() {return maxPlayersNumber;};
+	static const string getServerIp() {return serverIp;};
 	static string getExecutablePath();
 };
 
