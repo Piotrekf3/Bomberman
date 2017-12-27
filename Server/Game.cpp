@@ -2,6 +2,7 @@
 
 //config file
 const string Game::configFile = Game::getExecutablePath() + "config";
+const string Game::mapFile = Game::getExecutablePath() + "map"; 
 
 //default config
 string Game::serverIp = "127.0.0.1";
@@ -9,14 +10,16 @@ int Game::mapWidth=10;
 int Game::mapHeight=10;
 int Game::maxPlayersNumber=2;
 
-ssize_t Game::readData(int fd, char * buffer, ssize_t buffsize) {
-    auto ret = read(fd, buffer, buffsize);
+ssize_t Game::readData(int fd, string& buffer, ssize_t buffsize) {
+	char cbuffer[buffsize];
+    auto ret = read(fd, cbuffer, buffsize);
     if(ret==-1) error(1,errno, "read failed on descriptor %d", fd);
+	buffer = cbuffer;
     return ret;
 }
 
-void Game::writeData(int fd,const char * buffer, ssize_t count) {
-    auto ret = write(fd, buffer, count);
+void Game::writeData(int fd,const string& buffer, ssize_t count) {
+    auto ret = write(fd, buffer.c_str(), count);
     if(ret==-1) error(1, errno, "write failed on descriptor %d", fd);
     if(ret!=count) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, count, ret);
 }
@@ -43,7 +46,7 @@ void Game::sendMapChange(int sd, Pair where, int value)
 {
     string buffer;
     buffer = to_string(where.x) + ";" + to_string(where.y) + ";" + to_string(value);
-    writeData(sd ,buffer.c_str(), 255);
+    writeData(sd ,buffer, 255);
 }
 
 void Game::sendGameMap(int sd)
@@ -67,26 +70,25 @@ Pair Game::getPlayerPosition(int player)
     return Pair(0,0);
 }
 
-bool Game::validateMove(int player, char * direction)
+bool Game::validateMove(int player, const string& direction)
 {
     Pair position = getPlayerPosition(player);
-    string dir = direction;
-    if(dir=="left" && (position.y-1) >= 0 && players[position.x][position.y-1]==0
+    if(direction=="left" && (position.y-1) >= 0 && players[position.x][position.y-1]==0
             && gameMap[position.x][position.y-1]==0)
     {
         return true;
     }
-    else if(dir=="right" && (position.y+1)<mapWidth && players[position.x][position.y+1]==0
+    else if(direction=="right" && (position.y+1)<mapWidth && players[position.x][position.y+1]==0
             && gameMap[position.x][position.y+1]==0)
     {
         return true;
     }
-    else if(dir=="up" && (position.x-1)>=0 && players[position.x-1][position.y]==0
+    else if(direction=="up" && (position.x-1)>=0 && players[position.x-1][position.y]==0
             && gameMap[position.x-1][position.y]==0)
     {
         return true;
     }
-    else if(dir=="down" && (position.x+1)<mapHeight && players[position.x+1][position.y]==0
+    else if(direction=="down" && (position.x+1)<mapHeight && players[position.x+1][position.y]==0
             && gameMap[position.x+1][position.y]==0)
     {
         return true;
@@ -97,7 +99,7 @@ bool Game::validateMove(int player, char * direction)
     }
 }
 
-void Game::makeMove(int player, char * direction)
+void Game::makeMove(int player, const string& direction)
 {
     Pair position = getPlayerPosition(player);
     int i = position.x;
@@ -105,34 +107,26 @@ void Game::makeMove(int player, char * direction)
     if(!validateMove(player,direction))
         return;
     players[i][j]=0;
-    if(strcmp(direction,"left")==0)
+    if(direction=="left")
     {
         players[i][j-1]=player;
         sendMoveToAll(player,Pair(i,j),Pair(i,j-1));
     }
-    else if(strcmp(direction,"right")==0)
+    else if(direction=="right")
     {
         players[i][j+1]=player;
         sendMoveToAll(player,Pair(i,j),Pair(i,j+1));
     }
-    else if(strcmp(direction,"up")==0)
+    else if(direction=="up")
     {
         players[i-1][j]=player;
         sendMoveToAll(player,Pair(i,j),Pair(i-1,j));
     }
-    else if(strcmp(direction,"down")==0)
+    else if(direction=="down")
     {
         players[i+1][j]=player;
         sendMoveToAll(player,Pair(i,j),Pair(i+1,j));
     }
-}
-
-void Game::initGameMap()
-{
-    for(int i=0; i<mapHeight; i++)
-        for(int j=0; j<mapWidth; j++)
-            gameMap[i][j]=0;
-    gameMap[1][2]=1;
 }
 
 void Game::initPlayers()
@@ -146,9 +140,9 @@ void Game::clientThread(int playerNumber)
 {
     cout<<playerNumber<<endl;
     ssize_t bufsize = 255;
-    char buffer[bufsize];
+    string buffer;
     //start game
-    strcpy(buffer,"start");
+    buffer="start";
     writeData(playerDescriptors[playerNumber], buffer, bufsize);
     sleep(1);
     sendGameMap(playerDescriptors[playerNumber]);
@@ -163,11 +157,10 @@ void Game::clientThread(int playerNumber)
         cout<<"threadStop"<<threadStop[playerNumber]<<endl;
         readData(playerDescriptors[playerNumber], buffer, bufsize);
         cout<<buffer<<endl;
-        if(strcmp(buffer,"left")==0 || strcmp(buffer,"right")==0
-                || strcmp(buffer,"up") || strcmp(buffer,"down"))
+        if(buffer=="left" || buffer=="right" || buffer=="up" || buffer=="down")
         {
             makeMove(playerDescriptors[playerNumber],buffer);
-            strcpy(buffer,"null");
+            buffer="null";
         }
     }
 }
@@ -180,7 +173,7 @@ Game::Game(int descriptors[]) : gameMap(mapWidth, vector<int>(mapHeight)),
     descriptorsMutex(maxPlayersNumber)
 {
     cout<<"konstruktor"<<endl;
-    initGameMap();
+    loadMap();
     initPlayers();
     for(int i=0; i<maxPlayersNumber; i++)
         this->playerDescriptors[i] = descriptors[i];
@@ -252,6 +245,25 @@ void Game::loadConfig()
     else
         cout<<"Failed to load config\n"<<
             "Starting with default settings\n";
+}
+
+void Game::loadMap()
+{
+	ifstream file(mapFile);
+	string line;
+	if(file.is_open())
+	{
+		for(int i=0;i<mapHeight;i++)
+		{
+			getline(file,line);
+			for(int j=0; j<mapWidth; j++)
+			{
+				Game::gameMap[i][j]=line[j] - '0';
+				cout<<Game::gameMap[i][j];
+			}
+			cout<<endl;
+		}
+	}
 }
 
 string Game::getExecutablePath()

@@ -12,10 +12,10 @@
 #include <SFML/Graphics.hpp>
 using namespace std;
 
-const char * ip = "192.168.1.11";
+const char * ip = "127.0.0.1";
 const int maxPlayersNumber=2;
-const int mapWidth = 15;
-const int mapHeight = 15;
+const int mapWidth = 10;
+const int mapHeight = 10;
 int gameMap[mapWidth][mapHeight];
 int players[mapWidth][mapHeight];
 
