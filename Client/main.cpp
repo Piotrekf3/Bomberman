@@ -13,11 +13,11 @@
 using namespace std;
 
 const char * ip = "127.0.0.1";
-const int maxPlayersNumber=2;
-const int mapWidth = 10;
-const int mapHeight = 10;
-int gameMap[mapWidth][mapHeight];
-int players[mapWidth][mapHeight];
+int maxPlayersNumber=2;
+int mapWidth = 10;
+int mapHeight = 10;
+vector<vector<int>> gameMap;
+vector<vector<int>> players;
 
 class Pair
 {
@@ -46,14 +46,16 @@ void printPlayers()
 	}
 }
 
-ssize_t readData(int fd, char * buffer, ssize_t buffsize) {
-    auto ret = read(fd, buffer, buffsize);
+ssize_t readData(int fd, string& buffer, ssize_t buffsize) {
+	char cbuffer[buffsize];
+    auto ret = read(fd, cbuffer, buffsize);
     if(ret==-1) error(1,errno, "read failed on descriptor %d", fd);
+	buffer=cbuffer;
     return ret;
 }
 
-void writeData(int fd, char * buffer, ssize_t count) {
-    auto ret = write(fd, buffer, count);
+void writeData(int fd, const string& buffer, ssize_t count) {
+    auto ret = write(fd, buffer.c_str(), count);
     if(ret==-1) error(1, errno, "write failed on descriptor %d", fd);
     if(ret!=count) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, count, ret);
 }
@@ -61,9 +63,9 @@ void writeData(int fd, char * buffer, ssize_t count) {
 void sfmlWindow(int sd)
 {
     sf::RenderWindow window(sf::VideoMode(500,500),"Bomberman");
-    sf::RectangleShape rectangles[mapWidth][mapHeight];
+    vector<vector<sf::RectangleShape>> rectangles(mapWidth,vector<sf::RectangleShape>(mapHeight));
 	sf::CircleShape playerCircles[maxPlayersNumber];
-    char keyPressed[10]="null";
+    string keyPressed="null";
     while (window.isOpen())
     {
         sf::Event event;
@@ -71,25 +73,25 @@ void sfmlWindow(int sd)
         {
             if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
             {
-                strcpy(keyPressed,"left");
+                keyPressed="left";
             }
             else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
             {
-                strcpy(keyPressed,"right");
+                keyPressed="right";
             }
 			else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 			{
-				strcpy(keyPressed,"down");
+				keyPressed="down";
 			}
 			else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 			{
-				strcpy(keyPressed,"up");
+				keyPressed="up";
 			}
-            if(strcmp(keyPressed,"null")!=0)
+            if(keyPressed!="null")
             {
-                writeData(sd,keyPressed,strlen(keyPressed)+1);
+                writeData(sd,keyPressed,255);
 				cout<<"Pressed="<<keyPressed<<endl;
-                strcpy(keyPressed,"null");
+                keyPressed="null";
             }
             if (event.type == sf::Event::Closed)
                 window.close();
@@ -117,9 +119,8 @@ void sfmlWindow(int sd)
                     rectangles[i][j].setFillColor(sf::Color(255,0,0));
                 }
                 window.draw(rectangles[i][j]);
-				if(players[i][j]!=0)
+				if(players[i][j]!=0 && player<maxPlayersNumber)
 				{
-//					cout<<"i="<<i<<"j="<<j<<endl;
 					playerCircles[player].setRadius(rectangleWidth/2);
 					playerCircles[player].setFillColor(sf::Color(255,255,0));
 					playerCircles[player].setPosition(sf::Vector2f(j*rectangleHeight,i*rectangleWidth));
@@ -145,10 +146,25 @@ void changeMap(Pair where, int value)
 void clientRead(int sd)
 {
     ssize_t bufsize = 255;
-    char buffer[bufsize];
+    string buffer;
     cout<<"Oczekiwanie na pozostałych graczy\n";
-    while(strcmp(buffer,"start")!=0)
+    while(buffer!="start")
         readData(sd, buffer, bufsize);
+
+	readData(sd, buffer, bufsize);
+	mapWidth=stoi(buffer);
+	readData(sd, buffer, bufsize);
+	mapHeight=stoi(buffer);
+	cout<<mapWidth<<endl;
+	cout<<mapHeight<<endl;
+
+	gameMap.resize(mapWidth,vector<int>(mapHeight));
+	players.resize(mapWidth,vector<int>(mapHeight));
+
+	readData(sd, buffer, bufsize);
+	maxPlayersNumber=stoi(buffer);
+	cout<<maxPlayersNumber<<endl;
+
     cout<<"start gry\n";
     thread window = thread(sfmlWindow,sd);
     string message;
@@ -156,7 +172,7 @@ void clientRead(int sd)
     {
         readData(sd, buffer, bufsize);
         message=buffer;
-        cout<<message<<endl;
+        //cout<<message<<endl;
 		//ruch
         if(count(message.begin(),message.end(), ';')==4)
         {
@@ -198,13 +214,6 @@ void clientWrite(int sd)
             received = readData(0, buffer, bufsize);*/
 }
 
-void initGameMap()
-{
-    for(int i=0; i<mapHeight; i++)
-        for(int j=0; j<mapWidth; j++)
-            gameMap[i][j]=0;
-}
-
 int main() {
     int sd = socket(AF_INET,SOCK_STREAM,0);
     sockaddr_in saddr;
@@ -212,7 +221,6 @@ int main() {
     saddr.sin_port = htons(2500);
     saddr.sin_addr.s_addr = inet_addr(ip);
 
-    initGameMap();
     thread read;
     thread write;
     int cd = connect(sd,(sockaddr*) &saddr,sizeof(saddr));

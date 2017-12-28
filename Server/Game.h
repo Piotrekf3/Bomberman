@@ -59,6 +59,8 @@ public:
 	void loadMap();
 	static int getMaxPlayersNumber() {return maxPlayersNumber;};
 	static const string getServerIp() {return serverIp;};
+	static int getMapWidth() {return mapWidth;};
+	static int getMapHeight() {return mapHeight;};
 	static string getExecutablePath();
 };
 

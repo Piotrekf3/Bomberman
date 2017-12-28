@@ -144,6 +144,10 @@ void Game::clientThread(int playerNumber)
     //start game
     buffer="start";
     writeData(playerDescriptors[playerNumber], buffer, bufsize);
+
+	writeData(playerDescriptors[playerNumber],to_string(Game::getMapWidth()),bufsize);
+	writeData(playerDescriptors[playerNumber],to_string(Game::getMapHeight()),bufsize);
+	writeData(playerDescriptors[playerNumber],to_string(Game::getMaxPlayersNumber()),bufsize);
     sleep(1);
     sendGameMap(playerDescriptors[playerNumber]);
     //send players positions
