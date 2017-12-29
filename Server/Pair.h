@@ -11,6 +11,11 @@ public:
         this->x = x;
         this->y = y;
     }
+	Pair(std::string x, std::string y)
+	{
+		this->x = stoi(x);
+		this->y = stoi(y);
+	}
 };
 
 #endif

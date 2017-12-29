@@ -38,6 +38,7 @@ private:
     vector<thread> t;
 
 	vector<mutex> descriptorsMutex;
+	vector<int> bombs;
 
 	//methods
 	ssize_t readData(int fd, string& buffer, ssize_t buffsize);
@@ -51,6 +52,7 @@ private:
 	void makeMove(int player, const string& direction);
 	void clientThread(int sd);
 	void initPlayers();
+	void placeBomb(int playerNumber);
 
 public:
 	Game(int descriptors[]);

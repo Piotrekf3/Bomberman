@@ -136,6 +136,20 @@ void Game::initPlayers()
             players[i][j]=0;
 }
 
+void Game::placeBomb(int playerNumber)
+{
+	Pair position = getPlayerPosition(playerDescriptors[playerNumber]);
+	if(gameMap[position.x][position.y]==0 && bombs[playerNumber]<3)
+	{
+		gameMap[position.x][position.y]=3;
+		bombs[playerNumber]++;
+		for(int i=0;i<maxPlayersNumber;i++)
+		{
+			sendMapChange(playerDescriptors[i],position,3);
+		}
+	}
+}
+
 void Game::clientThread(int playerNumber)
 {
     cout<<playerNumber<<endl;
@@ -166,6 +180,10 @@ void Game::clientThread(int playerNumber)
             makeMove(playerDescriptors[playerNumber],buffer);
             buffer="null";
         }
+		else if(buffer=="bomb")
+		{
+			placeBomb(playerNumber);
+		}
     }
 }
 
@@ -174,7 +192,8 @@ Game::Game(int descriptors[]) : gameMap(mapWidth, vector<int>(mapHeight)),
     playerDescriptors(maxPlayersNumber),
     threadStop(maxPlayersNumber),
     t(maxPlayersNumber),
-    descriptorsMutex(maxPlayersNumber)
+    descriptorsMutex(maxPlayersNumber),
+	bombs(maxPlayersNumber)
 {
     cout<<"konstruktor"<<endl;
     loadMap();
