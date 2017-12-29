@@ -74,22 +74,22 @@ bool Game::validateMove(int player, const string& direction)
 {
     Pair position = getPlayerPosition(player);
     if(direction=="left" && (position.y-1) >= 0 && players[position.x][position.y-1]==0
-            && gameMap[position.x][position.y-1]==0)
+            && gameMap[position.x][position.y-1]%3==0)
     {
         return true;
     }
     else if(direction=="right" && (position.y+1)<mapWidth && players[position.x][position.y+1]==0
-            && gameMap[position.x][position.y+1]==0)
+            && gameMap[position.x][position.y+1]%3==0)
     {
         return true;
     }
     else if(direction=="up" && (position.x-1)>=0 && players[position.x-1][position.y]==0
-            && gameMap[position.x-1][position.y]==0)
+            && gameMap[position.x-1][position.y]%3==0)
     {
         return true;
     }
     else if(direction=="down" && (position.x+1)<mapHeight && players[position.x+1][position.y]==0
-            && gameMap[position.x+1][position.y]==0)
+            && gameMap[position.x+1][position.y]%3==0)
     {
         return true;
     }
@@ -193,7 +193,7 @@ Game::Game(int descriptors[]) : gameMap(mapWidth, vector<int>(mapHeight)),
     threadStop(maxPlayersNumber),
     t(maxPlayersNumber),
     descriptorsMutex(maxPlayersNumber),
-	bombs(maxPlayersNumber)
+	bombs(maxPlayersNumber,0)
 {
     cout<<"konstruktor"<<endl;
     loadMap();

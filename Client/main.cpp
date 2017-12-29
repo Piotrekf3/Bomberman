@@ -29,28 +29,28 @@ public:
         this->x = x;
         this->y = y;
     }
-	Pair(string x, string y)
-	{
-		this->x = stoi(x);
-		this->y = stoi(y);
-	}
+    Pair(string x, string y)
+    {
+        this->x = stoi(x);
+        this->y = stoi(y);
+    }
 };
 
 void printPlayers()
 {
-	for(int i=0; i<mapWidth;i++)
-	{
-		for(int j=0;j<mapHeight;j++)
-			cout<<players[i][j];
-		cout<<endl;
-	}
+    for(int i=0; i<mapWidth; i++)
+    {
+        for(int j=0; j<mapHeight; j++)
+            cout<<players[i][j];
+        cout<<endl;
+    }
 }
 
 ssize_t readData(int fd, string& buffer, ssize_t buffsize) {
-	char cbuffer[buffsize];
+    char cbuffer[buffsize];
     auto ret = read(fd, cbuffer, buffsize);
     if(ret==-1) error(1,errno, "read failed on descriptor %d", fd);
-	buffer=cbuffer;
+    buffer=cbuffer;
     return ret;
 }
 
@@ -64,7 +64,11 @@ void sfmlWindow(int sd)
 {
     sf::RenderWindow window(sf::VideoMode(500,500),"Bomberman");
     vector<vector<sf::RectangleShape>> rectangles(mapWidth,vector<sf::RectangleShape>(mapHeight));
-	sf::CircleShape playerCircles[maxPlayersNumber];
+	vector<sf::CircleShape> bombs(maxPlayersNumber*3);
+	for(int i=0;i<maxPlayersNumber*3;i++)
+		bombs[i].setFillColor(sf::Color(0,0,0));
+    sf::CircleShape playerCircles[maxPlayersNumber];
+
     string keyPressed="null";
     while (window.isOpen())
     {
@@ -79,18 +83,22 @@ void sfmlWindow(int sd)
             {
                 keyPressed="right";
             }
-			else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+            else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+            {
+                keyPressed="down";
+            }
+            else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+            {
+                keyPressed="up";
+            }
+			else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
 			{
-				keyPressed="down";
-			}
-			else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-			{
-				keyPressed="up";
+				keyPressed="bomb";
 			}
             if(keyPressed!="null")
             {
                 writeData(sd,keyPressed,255);
-				cout<<"Pressed="<<keyPressed<<endl;
+                cout<<"Pressed="<<keyPressed<<endl;
                 keyPressed="null";
             }
             if (event.type == sf::Event::Closed)
@@ -98,7 +106,8 @@ void sfmlWindow(int sd)
         }
         int rectangleWidth = window.getSize().x/mapWidth;
         int rectangleHeight = window.getSize().y/mapHeight;
-		int player=0;
+        int player=0;
+		int bomb=0;
 
         window.clear();
         for(int i=0; i<mapWidth; i++)
@@ -119,14 +128,22 @@ void sfmlWindow(int sd)
                     rectangles[i][j].setFillColor(sf::Color(255,0,0));
                 }
                 window.draw(rectangles[i][j]);
-				if(players[i][j]!=0 && player<maxPlayersNumber)
+				if(gameMap[i][j]==3 && bomb<maxPlayersNumber*3)
 				{
-					playerCircles[player].setRadius(rectangleWidth/2);
-					playerCircles[player].setFillColor(sf::Color(255,255,0));
-					playerCircles[player].setPosition(sf::Vector2f(j*rectangleHeight,i*rectangleWidth));
-					window.draw(playerCircles[player]);
-					player++;
+					bombs[bomb].setRadius(rectangleWidth/4);
+					bombs[bomb].setPosition(sf::Vector2f(j*rectangleHeight+bombs[bomb].getRadius(),
+								i*rectangleWidth+bombs[bomb].getRadius()));
+					window.draw(bombs[bomb]);
+					bomb++;
 				}
+                if(players[i][j]!=0 && player<maxPlayersNumber)
+                {
+                    playerCircles[player].setRadius(rectangleWidth/2);
+                    playerCircles[player].setFillColor(sf::Color(255,255,0));
+                    playerCircles[player].setPosition(sf::Vector2f(j*rectangleHeight,i*rectangleWidth));
+                    window.draw(playerCircles[player]);
+                    player++;
+                }
             }
         window.display();
     }
@@ -140,7 +157,7 @@ void makeMove(int player,Pair from,Pair to)
 
 void changeMap(Pair where, int value)
 {
-	gameMap[where.x][where.y]=value;
+    gameMap[where.x][where.y]=value;
 }
 
 void clientRead(int sd)
@@ -151,19 +168,19 @@ void clientRead(int sd)
     while(buffer!="start")
         readData(sd, buffer, bufsize);
 
-	readData(sd, buffer, bufsize);
-	mapWidth=stoi(buffer);
-	readData(sd, buffer, bufsize);
-	mapHeight=stoi(buffer);
-	cout<<mapWidth<<endl;
-	cout<<mapHeight<<endl;
+    readData(sd, buffer, bufsize);
+    mapWidth=stoi(buffer);
+    readData(sd, buffer, bufsize);
+    mapHeight=stoi(buffer);
+    cout<<mapWidth<<endl;
+    cout<<mapHeight<<endl;
 
-	gameMap.resize(mapWidth,vector<int>(mapHeight));
-	players.resize(mapWidth,vector<int>(mapHeight));
+    gameMap.resize(mapWidth,vector<int>(mapHeight));
+    players.resize(mapWidth,vector<int>(mapHeight));
 
-	readData(sd, buffer, bufsize);
-	maxPlayersNumber=stoi(buffer);
-	cout<<maxPlayersNumber<<endl;
+    readData(sd, buffer, bufsize);
+    maxPlayersNumber=stoi(buffer);
+    cout<<maxPlayersNumber<<endl;
 
     cout<<"start gry\n";
     thread window = thread(sfmlWindow,sd);
@@ -172,46 +189,39 @@ void clientRead(int sd)
     {
         readData(sd, buffer, bufsize);
         message=buffer;
-        //cout<<message<<endl;
-		//ruch
+        cout<<message<<endl;
+        //ruch
         if(count(message.begin(),message.end(), ';')==4)
         {
             string delimiter = ";";
             size_t pos = 0;
             string token[5];
-			int i=0;
-            while ((pos = message.find(delimiter)) != string::npos) 
-			{
+            int i=0;
+            while ((pos = message.find(delimiter)) != string::npos)
+            {
                 token[i] = message.substr(0, pos);
-				i++;
+                i++;
                 message.erase(0, pos + delimiter.length());
             }
-			makeMove(stoi(token[0]),Pair(token[1],token[2]),Pair(token[3],message));
+            makeMove(stoi(token[0]),Pair(token[1],token[2]),Pair(token[3],message));
         }
-		//zmiana mapy
-		else if(count(message.begin(),message.end(), ';')==2)
-		{
+        //zmiana mapy
+        else if(count(message.begin(),message.end(), ';')==2)
+        {
             string delimiter = ";";
             size_t pos = 0;
             string token[3];
-			int i=0;
-            while ((pos = message.find(delimiter)) != string::npos) 
-			{
+            int i=0;
+            while ((pos = message.find(delimiter)) != string::npos)
+            {
                 token[i] = message.substr(0, pos);
-				i++;
+                i++;
                 message.erase(0, pos + delimiter.length());
             }
-			changeMap(Pair(token[0],token[1]),stoi(message));
-		}
+            changeMap(Pair(token[0],token[1]),stoi(message));
+        }
     }
 
-}
-
-void clientWrite(int sd)
-{
-    /*        ssize_t bufsize = 255, received;
-            char buffer[bufsize];
-            received = readData(0, buffer, bufsize);*/
 }
 
 int main() {
@@ -227,9 +237,7 @@ int main() {
     if(cd==0)
     {
         read = thread(clientRead,sd);
-//        write = thread(clientWrite,sd);
         read.join();
-//        write.join();
     }
 
     return 0;
