@@ -160,6 +160,11 @@ void changeMap(Pair where, int value)
     gameMap[where.x][where.y]=value;
 }
 
+void killPlayer(Pair where)
+{
+	players[where.x][where.y]=0;
+}
+
 void clientRead(int sd)
 {
     ssize_t bufsize = 255;
@@ -203,7 +208,10 @@ void clientRead(int sd)
                 i++;
                 message.erase(0, pos + delimiter.length());
             }
-            makeMove(stoi(token[0]),Pair(token[1],token[2]),Pair(token[3],message));
+			if(token[3]=="-1" && message=="-1")
+				killPlayer(Pair(token[1],token[2]));
+			else
+				makeMove(stoi(token[0]),Pair(token[1],token[2]),Pair(token[3],message));
         }
         //zmiana mapy
         else if(count(message.begin(),message.end(), ';')==2)
