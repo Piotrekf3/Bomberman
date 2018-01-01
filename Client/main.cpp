@@ -169,7 +169,7 @@ void clientRead(int sd)
 {
     ssize_t bufsize = 255;
     string buffer;
-    cout<<"Oczekiwanie na pozostałych graczy\n";
+    cout<<"Waiting for other players\n";
     while(buffer!="start")
         readData(sd, buffer, bufsize);
 
@@ -232,7 +232,18 @@ void clientRead(int sd)
 
 }
 
-int main() {
+bool checkIp(string ip)
+{
+	if(count(ip.begin(),ip.end(),'.')==3)
+		return true;
+	else return false;
+}
+
+int main(int args, char * argv[]) {
+	if(args>1 && checkIp(argv[1]))
+		cout<<"connecting to server on "<<argv[1]<<endl;
+	else
+		cout<<"connecting to server on localhost\n";
     int sd = socket(AF_INET,SOCK_STREAM,0);
     sockaddr_in saddr;
     saddr.sin_family = AF_INET;
