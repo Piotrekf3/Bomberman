@@ -118,7 +118,7 @@ void sfmlWindow(int sd)
         for(int i=0; i<mapWidth; i++)
             for(int j=0; j<mapHeight; j++)
             {
-                rectangles[i][j].setSize(sf::Vector2f(rectangleWidth,rectangleHeight));
+    /*            rectangles[i][j].setSize(sf::Vector2f(rectangleWidth,rectangleHeight));
                 rectangles[i][j].setPosition(sf::Vector2f(j*rectangleHeight,i*rectangleWidth));
                 if(gameMap[i][j]==0)
                 {
@@ -133,7 +133,7 @@ void sfmlWindow(int sd)
                     rectangles[i][j].setFillColor(sf::Color(255,0,0));
                 }
                 //window.draw(rectangles[i][j]);
-				/*if(gameMap[i][j]==3 && bomb<maxPlayersNumber*3)
+				if(gameMap[i][j]==3 && bomb<maxPlayersNumber*3)
 				{
 					bombs[bomb].setRadius(rectangleWidth/4);
 					bombs[bomb].setPosition(sf::Vector2f(j*rectangleHeight+bombs[bomb].getRadius(),
@@ -258,14 +258,11 @@ int main(int args, char * argv[]) {
     saddr.sin_port = htons(2500);
     saddr.sin_addr.s_addr = inet_addr(argv[1]);
 
-    thread read;
-    thread write;
     int cd = connect(sd,(sockaddr*) &saddr,sizeof(saddr));
 	cout<<"cd="<<cd<<endl;
     if(cd==0)
     {
-        read = thread(clientRead,sd);
-        read.join();
+        clientRead(sd);
     }
 
     return 0;

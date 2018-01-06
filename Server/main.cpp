@@ -16,19 +16,6 @@
 #include "Pair.h"
 using namespace std;
 
-ssize_t readData(int fd, char * buffer, ssize_t buffsize) {
-    auto ret = read(fd, buffer, buffsize);
-    if(ret==-1) error(1,errno, "read failed on descriptor %d", fd);
-    return ret;
-}
-
-void writeData(int fd,const char * buffer, ssize_t count) {
-    auto ret = write(fd, buffer, count);
-    if(ret==-1) error(1, errno, "write failed on descriptor %d", fd);
-    if(ret!=count) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, count, ret);
-}
-
-
 int main(int argc, char **argv) {
 
 	//wczytanie konfiguracji
