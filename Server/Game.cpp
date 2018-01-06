@@ -10,19 +10,25 @@ int Game::mapWidth=10;
 int Game::mapHeight=10;
 int Game::maxPlayersNumber=2;
 
-ssize_t Game::readData(int fd, string& buffer, ssize_t buffsize) {
-    char cbuffer[buffsize];
-    auto ret = read(fd, cbuffer, buffsize);
-    if(ret==-1) error(1,errno, "read failed on descriptor %d", fd);
-    buffer = cbuffer;
-    return ret;
+ssize_t Game::readData(int fd, string& buffer) {
+    char cbuffer;
+	buffer="";
+	while(read(fd,&cbuffer,1))
+	{
+		if(cbuffer=='!')
+			break;
+		else
+			buffer+=string(&cbuffer);
+	}
+    return buffer.length();
 }
 
-void Game::writeData(int fd,const string& buffer, ssize_t count) {
-    auto ret = write(fd, buffer.c_str(), count);
+void Game::writeData(int fd,const string& buffer) {
+    auto ret = write(fd, (buffer+"!").c_str(),buffer.length()+1);
     if(ret==-1) error(1, errno, "write failed on descriptor %d", fd);
-    if(ret!=count) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, count, ret);
+    //if(ret!=buffer.length()) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, buffer.length(), ret);
 }
+
 //if to = (-1,-1) player is killed
 void Game::sendMoveToAll(int player,Pair from, Pair to)
 {
@@ -37,7 +43,7 @@ void Game::sendMoveToAll(int player,Pair from, Pair to)
     for(int i=0; i<maxPlayersNumber; i++)
     {
         descriptorsMutex[i].lock();
-        writeData(playerDescriptors[i],result,255);
+        writeData(playerDescriptors[i],result);
         descriptorsMutex[i].unlock();
     }
 }
@@ -46,7 +52,7 @@ void Game::sendMapChange(int sd, Pair where, int value)
 {
     string buffer;
     buffer = to_string(where.x) + ";" + to_string(where.y) + ";" + to_string(value);
-    writeData(sd ,buffer, 255);
+    writeData(sd ,buffer);
 }
 
 void Game::sendGameMap(int sd)
@@ -247,15 +253,13 @@ void Game::placeBomb(int playerNumber)
 void Game::clientThread(int playerNumber)
 {
     cout<<playerNumber<<endl;
-    ssize_t bufsize = 255;
     string buffer;
     //start game
     buffer="start";
-    writeData(playerDescriptors[playerNumber], buffer, bufsize);
-
-    writeData(playerDescriptors[playerNumber],to_string(Game::getMapWidth()),bufsize);
-    writeData(playerDescriptors[playerNumber],to_string(Game::getMapHeight()),bufsize);
-    writeData(playerDescriptors[playerNumber],to_string(Game::getMaxPlayersNumber()),bufsize);
+    writeData(playerDescriptors[playerNumber], buffer);
+    writeData(playerDescriptors[playerNumber],to_string(Game::getMapWidth()));
+    writeData(playerDescriptors[playerNumber],to_string(Game::getMapHeight()));
+    writeData(playerDescriptors[playerNumber],to_string(Game::getMaxPlayersNumber()));
     sleep(1);
     sendGameMap(playerDescriptors[playerNumber]);
     //send players positions
@@ -267,7 +271,7 @@ void Game::clientThread(int playerNumber)
     {
         cout<<"reading"<<endl;
         cout<<"threadStop"<<threadStop[playerNumber]<<endl;
-        readData(playerDescriptors[playerNumber], buffer, bufsize);
+        readData(playerDescriptors[playerNumber], buffer);
         cout<<buffer<<endl;
         if(buffer=="left" || buffer=="right" || buffer=="up" || buffer=="down")
         {

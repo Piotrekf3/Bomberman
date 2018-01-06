@@ -46,18 +46,23 @@ void printPlayers()
     }
 }
 
-ssize_t readData(int fd, string& buffer, ssize_t buffsize) {
-    char cbuffer[buffsize];
-    auto ret = read(fd, cbuffer, buffsize);
-    if(ret==-1) error(1,errno, "read failed on descriptor %d", fd);
-    buffer=cbuffer;
-    return ret;
+ssize_t readData(int fd, string& buffer) {
+    char cbuffer='0';
+	buffer="";
+	while(read(fd,&cbuffer,1))
+	{
+		if(cbuffer=='!')
+			break;
+		else
+			buffer+=string(&cbuffer);
+	}
+    return buffer.length();
 }
 
-void writeData(int fd, const string& buffer, ssize_t count) {
-    auto ret = write(fd, buffer.c_str(), count);
+void writeData(int fd, const string& buffer) {
+    auto ret = write(fd, (buffer+"!").c_str(), buffer.length()+1);
     if(ret==-1) error(1, errno, "write failed on descriptor %d", fd);
-    if(ret!=count) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, count, ret);
+    //if(ret!=buffer.length()) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, buffer.length()+1, ret);
 }
 
 void sfmlWindow(int sd)
@@ -67,7 +72,7 @@ void sfmlWindow(int sd)
 	vector<sf::CircleShape> bombs(maxPlayersNumber*3);
 	for(int i=0;i<maxPlayersNumber*3;i++)
 		bombs[i].setFillColor(sf::Color(0,0,0));
-    sf::CircleShape playerCircles[maxPlayersNumber];
+//    sf::CircleShape playerCircles[maxPlayersNumber];
 
     string keyPressed="null";
     while (window.isOpen())
@@ -97,7 +102,7 @@ void sfmlWindow(int sd)
 			}
             if(keyPressed!="null")
             {
-                writeData(sd,keyPressed,255);
+                writeData(sd,keyPressed);
                 cout<<"Pressed="<<keyPressed<<endl;
                 keyPressed="null";
             }
@@ -127,23 +132,23 @@ void sfmlWindow(int sd)
                 {
                     rectangles[i][j].setFillColor(sf::Color(255,0,0));
                 }
-                window.draw(rectangles[i][j]);
-				if(gameMap[i][j]==3 && bomb<maxPlayersNumber*3)
+                //window.draw(rectangles[i][j]);
+				/*if(gameMap[i][j]==3 && bomb<maxPlayersNumber*3)
 				{
 					bombs[bomb].setRadius(rectangleWidth/4);
 					bombs[bomb].setPosition(sf::Vector2f(j*rectangleHeight+bombs[bomb].getRadius(),
 								i*rectangleWidth+bombs[bomb].getRadius()));
 					window.draw(bombs[bomb]);
 					bomb++;
-				}
-                if(players[i][j]!=0 && player<maxPlayersNumber)
+				}*/
+  /*              if(players[i][j]!=0 && player<maxPlayersNumber)
                 {
                     playerCircles[player].setRadius(rectangleWidth/2);
                     playerCircles[player].setFillColor(sf::Color(255,255,0));
                     playerCircles[player].setPosition(sf::Vector2f(j*rectangleHeight,i*rectangleWidth));
                     window.draw(playerCircles[player]);
                     player++;
-                }
+                }*/
             }
         window.display();
     }
@@ -167,15 +172,18 @@ void killPlayer(Pair where)
 
 void clientRead(int sd)
 {
-    ssize_t bufsize = 255;
+    //ssize_t bufsize = 255;
     string buffer;
     cout<<"Waiting for other players\n";
     while(buffer!="start")
-        readData(sd, buffer, bufsize);
-
-    readData(sd, buffer, bufsize);
+	{
+        readData(sd, buffer);
+	}
+	cout<<"po start"<<endl;	
+    readData(sd, buffer);
+	cout<<"read"<<endl;
     mapWidth=stoi(buffer);
-    readData(sd, buffer, bufsize);
+    readData(sd, buffer);
     mapHeight=stoi(buffer);
     cout<<mapWidth<<endl;
     cout<<mapHeight<<endl;
@@ -183,7 +191,7 @@ void clientRead(int sd)
     gameMap.resize(mapWidth,vector<int>(mapHeight));
     players.resize(mapWidth,vector<int>(mapHeight));
 
-    readData(sd, buffer, bufsize);
+    readData(sd, buffer);
     maxPlayersNumber=stoi(buffer);
     cout<<maxPlayersNumber<<endl;
 
@@ -192,9 +200,9 @@ void clientRead(int sd)
     string message;
     while(1)
     {
-        readData(sd, buffer, bufsize);
+        readData(sd, buffer);
         message=buffer;
-        cout<<message<<endl;
+        //cout<<message<<endl;
         //ruch
         if(count(message.begin(),message.end(), ';')==4)
         {
@@ -213,7 +221,7 @@ void clientRead(int sd)
 			else
 				makeMove(stoi(token[0]),Pair(token[1],token[2]),Pair(token[3],message));
         }
-        //zmiana mapy
+        //zmiana na mapie
         else if(count(message.begin(),message.end(), ';')==2)
         {
             string delimiter = ";";
@@ -248,11 +256,12 @@ int main(int args, char * argv[]) {
     sockaddr_in saddr;
     saddr.sin_family = AF_INET;
     saddr.sin_port = htons(2500);
-    saddr.sin_addr.s_addr = inet_addr(ip);
+    saddr.sin_addr.s_addr = inet_addr(argv[1]);
 
     thread read;
     thread write;
     int cd = connect(sd,(sockaddr*) &saddr,sizeof(saddr));
+	cout<<"cd="<<cd<<endl;
     if(cd==0)
     {
         read = thread(clientRead,sd);

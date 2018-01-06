@@ -44,8 +44,8 @@ private:
 	vector<thread> bombThreads;
 
 	//methods
-	ssize_t readData(int fd, string& buffer, ssize_t buffsize);
-	void writeData(int fd,const string& buffer, ssize_t count);
+	ssize_t readData(int fd, string& buffer);
+	void writeData(int fd,const string& buffer);
 	void sendMoveToAll(int player,Pair from, Pair to);
 	void sendMapChange(int sd, Pair where, int value);
 	void sendGameMap(int sd);
