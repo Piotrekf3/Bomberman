@@ -43,6 +43,8 @@ private:
 	vector<atomic<int>> bombs;
 	vector<thread> bombThreads;
 
+	atomic<int> playersCount;
+
 	//methods
 	ssize_t readData(int fd, string& buffer);
 	void writeData(int fd,const string& buffer);
@@ -60,6 +62,7 @@ private:
 public:
 	Game(int descriptors[]);
 	~Game();
+	int getPlayersCount(){return playersCount;};
 	static void loadConfig();
 	void loadMap();
 	static int getMaxPlayersNumber() {return maxPlayersNumber;};

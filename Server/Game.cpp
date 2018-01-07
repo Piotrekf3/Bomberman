@@ -166,6 +166,7 @@ void Game::bombThread(Pair position, int playerNumber)
 			int player = players[position.x][i];
 			players[position.x][i]=0;
 			sendMoveToAll(player,Pair(position.x,i),Pair(-1,-1));
+			playersCount--;
 		}
 	}
 
@@ -183,6 +184,7 @@ void Game::bombThread(Pair position, int playerNumber)
 			int player = players[position.x][i];
 			players[position.x][i]=0;
 			sendMoveToAll(player,Pair(position.x,i),Pair(-1,-1));
+			playersCount--;
 		}
 	}
 
@@ -200,6 +202,7 @@ void Game::bombThread(Pair position, int playerNumber)
 			int player = players[i][position.y];
 			players[i][position.y]=0;
 			sendMoveToAll(player,Pair(i,position.y),Pair(-1,-1));
+			playersCount--;
 		}
 	}
 
@@ -217,15 +220,16 @@ void Game::bombThread(Pair position, int playerNumber)
 			int player = players[i][position.y];
 			players[i][position.y]=0;
 			sendMoveToAll(player,Pair(i,position.y),Pair(-1,-1));
+			playersCount--;
 		}
 	}
 
     for(int i=0; i<maxPlayersNumber; i++)
     {
         sendMapChange(playerDescriptors[i],position,0);
-		for(auto it = destroyedBlocks.begin(); it!=destroyedBlocks.end();it++)
+		for(auto&& it : destroyedBlocks)
 		{
-        	sendMapChange(playerDescriptors[i],*it,0);
+        	sendMapChange(playerDescriptors[i],it,0);
 		}
     }
     bombs[playerNumber]--;
@@ -297,6 +301,7 @@ Game::Game(int descriptors[]) : gameMap(mapWidth, vector<int>(mapHeight)),
     cout<<"konstruktor"<<endl;
     loadMap();
     initPlayers();
+	playersCount=maxPlayersNumber;
     for(int i=0; i<maxPlayersNumber; i++)
         this->playerDescriptors[i] = descriptors[i];
     for(int i=0; i<maxPlayersNumber; i++)
@@ -319,7 +324,7 @@ Game::Game(int descriptors[]) : gameMap(mapWidth, vector<int>(mapHeight)),
 
 Game::~Game()
 {
-    cout<<"end of game"<<endl;
+    cout<<"end of game\n";
     for(int i=0; i<1; i++)
     {
         threadStop[i]=true;

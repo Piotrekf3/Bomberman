@@ -16,6 +16,27 @@
 #include "Pair.h"
 using namespace std;
 
+//tablica gier
+vector <unique_ptr<Game>> games;
+mutex gamesMutex;
+
+void gameEnd()
+{
+	while(1)
+	{
+		sleep(3);
+		lock_guard<mutex> lock(gamesMutex);
+		for(auto it=games.begin();it!=games.end();)
+		{
+			cout<<(*it)->getPlayersCount()<<endl;
+			if((*it)->getPlayersCount()<=1)
+				it = games.erase(it);
+			else
+				++it;
+		}
+	}
+}
+
 int main(int argc, char **argv) {
 
 	//wczytanie konfiguracji
@@ -31,9 +52,9 @@ int main(int argc, char **argv) {
     bind(sd,(sockaddr*) &saddr,sizeof(saddr));
     listen(sd,Game::getMaxPlayersNumber());
 
-	//tablica gier
-	vector <unique_ptr<Game>> games;
+
 	int playerDescriptors[Game::getMaxPlayersNumber()];
+	thread t(gameEnd);
 
     int cd;
     int i=0;
@@ -50,6 +71,7 @@ int main(int argc, char **argv) {
         {
             //start gry
 			cout<<"start gry\n";
+			lock_guard<mutex> lock(gamesMutex);
 			games.push_back(unique_ptr<Game>(new Game(playerDescriptors)));
 			i=0;
         }

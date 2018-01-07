@@ -48,14 +48,14 @@ void printPlayers()
 
 ssize_t readData(int fd, string& buffer) {
     char cbuffer='0';
-	buffer="";
-	while(read(fd,&cbuffer,1))
-	{
-		if(cbuffer=='!')
-			break;
-		else
-			buffer+=string(&cbuffer);
-	}
+    buffer="";
+    while(read(fd,&cbuffer,1))
+    {
+        if(cbuffer=='!')
+            break;
+        else
+            buffer+=string(&cbuffer);
+    }
     return buffer.length();
 }
 
@@ -69,10 +69,10 @@ void sfmlWindow(int sd)
 {
     sf::RenderWindow window(sf::VideoMode(500,500),"Bomberman");
     vector<vector<sf::RectangleShape>> rectangles(mapWidth,vector<sf::RectangleShape>(mapHeight));
-	vector<sf::CircleShape> bombs(maxPlayersNumber*3);
-	for(int i=0;i<maxPlayersNumber*3;i++)
-		bombs[i].setFillColor(sf::Color(0,0,0));
-//    sf::CircleShape playerCircles[maxPlayersNumber];
+    vector<sf::CircleShape> bombs(maxPlayersNumber*3);
+    for(int i=0; i<maxPlayersNumber*3; i++)
+        bombs[i].setFillColor(sf::Color(0,0,0));
+    sf::CircleShape playerCircles[maxPlayersNumber];
 
     string keyPressed="null";
     while (window.isOpen())
@@ -96,10 +96,10 @@ void sfmlWindow(int sd)
             {
                 keyPressed="up";
             }
-			else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-			{
-				keyPressed="bomb";
-			}
+            else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+            {
+                keyPressed="bomb";
+            }
             if(keyPressed!="null")
             {
                 writeData(sd,keyPressed);
@@ -112,13 +112,13 @@ void sfmlWindow(int sd)
         int rectangleWidth = window.getSize().x/mapWidth;
         int rectangleHeight = window.getSize().y/mapHeight;
         int player=0;
-		int bomb=0;
+        int bomb=0;
 
         window.clear();
         for(int i=0; i<mapWidth; i++)
             for(int j=0; j<mapHeight; j++)
             {
-    /*            rectangles[i][j].setSize(sf::Vector2f(rectangleWidth,rectangleHeight));
+                rectangles[i][j].setSize(sf::Vector2f(rectangleWidth,rectangleHeight));
                 rectangles[i][j].setPosition(sf::Vector2f(j*rectangleHeight,i*rectangleWidth));
                 if(gameMap[i][j]==0)
                 {
@@ -132,23 +132,23 @@ void sfmlWindow(int sd)
                 {
                     rectangles[i][j].setFillColor(sf::Color(255,0,0));
                 }
-                //window.draw(rectangles[i][j]);
-				if(gameMap[i][j]==3 && bomb<maxPlayersNumber*3)
-				{
-					bombs[bomb].setRadius(rectangleWidth/4);
-					bombs[bomb].setPosition(sf::Vector2f(j*rectangleHeight+bombs[bomb].getRadius(),
-								i*rectangleWidth+bombs[bomb].getRadius()));
-					window.draw(bombs[bomb]);
-					bomb++;
-				}*/
-  /*              if(players[i][j]!=0 && player<maxPlayersNumber)
+                window.draw(rectangles[i][j]);
+                if(gameMap[i][j]==3 && bomb<maxPlayersNumber*3)
+                {
+                    bombs[bomb].setRadius(rectangleWidth/4);
+                    bombs[bomb].setPosition(sf::Vector2f(j*rectangleHeight+bombs[bomb].getRadius(),
+                                                         i*rectangleWidth+bombs[bomb].getRadius()));
+                    window.draw(bombs[bomb]);
+                    bomb++;
+                }
+                if(players[i][j]!=0 && player<maxPlayersNumber)
                 {
                     playerCircles[player].setRadius(rectangleWidth/2);
                     playerCircles[player].setFillColor(sf::Color(255,255,0));
                     playerCircles[player].setPosition(sf::Vector2f(j*rectangleHeight,i*rectangleWidth));
                     window.draw(playerCircles[player]);
                     player++;
-                }*/
+                }
             }
         window.display();
     }
@@ -167,7 +167,7 @@ void changeMap(Pair where, int value)
 
 void killPlayer(Pair where)
 {
-	players[where.x][where.y]=0;
+    players[where.x][where.y]=0;
 }
 
 void clientRead(int sd)
@@ -176,12 +176,12 @@ void clientRead(int sd)
     string buffer;
     cout<<"Waiting for other players\n";
     while(buffer!="start")
-	{
+    {
         readData(sd, buffer);
-	}
-	cout<<"po start"<<endl;	
+    }
+    cout<<"po start"<<endl;
     readData(sd, buffer);
-	cout<<"read"<<endl;
+    cout<<"read"<<endl;
     mapWidth=stoi(buffer);
     readData(sd, buffer);
     mapHeight=stoi(buffer);
@@ -216,10 +216,10 @@ void clientRead(int sd)
                 i++;
                 message.erase(0, pos + delimiter.length());
             }
-			if(token[3]=="-1" && message=="-1")
-				killPlayer(Pair(token[1],token[2]));
-			else
-				makeMove(stoi(token[0]),Pair(token[1],token[2]),Pair(token[3],message));
+            if(token[3]=="-1" && message=="-1")
+                killPlayer(Pair(token[1],token[2]));
+            else
+                makeMove(stoi(token[0]),Pair(token[1],token[2]),Pair(token[3],message));
         }
         //zmiana na mapie
         else if(count(message.begin(),message.end(), ';')==2)
@@ -242,16 +242,16 @@ void clientRead(int sd)
 
 bool checkIp(string ip)
 {
-	if(count(ip.begin(),ip.end(),'.')==3)
-		return true;
-	else return false;
+    if(count(ip.begin(),ip.end(),'.')==3)
+        return true;
+    else return false;
 }
 
 int main(int args, char * argv[]) {
-	if(args>1 && checkIp(argv[1]))
-		cout<<"connecting to server on "<<argv[1]<<endl;
-	else
-		cout<<"connecting to server on localhost\n";
+    if(args>1 && checkIp(argv[1]))
+        cout<<"connecting to server on "<<argv[1]<<endl;
+    else
+        cout<<"connecting to server on localhost\n";
     int sd = socket(AF_INET,SOCK_STREAM,0);
     sockaddr_in saddr;
     saddr.sin_family = AF_INET;
@@ -259,7 +259,7 @@ int main(int args, char * argv[]) {
     saddr.sin_addr.s_addr = inet_addr(argv[1]);
 
     int cd = connect(sd,(sockaddr*) &saddr,sizeof(saddr));
-	cout<<"cd="<<cd<<endl;
+    cout<<"cd="<<cd<<endl;
     if(cd==0)
     {
         clientRead(sd);
