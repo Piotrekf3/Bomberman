@@ -179,9 +179,7 @@ void clientRead(int sd)
     {
         readData(sd, buffer);
     }
-    cout<<"po start"<<endl;
     readData(sd, buffer);
-    cout<<"read"<<endl;
     mapWidth=stoi(buffer);
     readData(sd, buffer);
     mapHeight=stoi(buffer);
@@ -202,6 +200,11 @@ void clientRead(int sd)
     {
         readData(sd, buffer);
         message=buffer;
+		if(message=="end")
+		{
+			cout<<"koniec gry\n";
+			writeData(sd,"stop");
+		}
         //cout<<message<<endl;
         //ruch
         if(count(message.begin(),message.end(), ';')==4)

@@ -325,12 +325,17 @@ Game::Game(int descriptors[]) : gameMap(mapWidth, vector<int>(mapHeight)),
 Game::~Game()
 {
     cout<<"end of game\n";
-    for(int i=0; i<1; i++)
+    for(int i=0; i<maxPlayersNumber; i++)
     {
         threadStop[i]=true;
+		writeData(playerDescriptors[i],"end");
         if(t[i].joinable())
+		{
+			cout<<"join"<<endl;
             t[i].join();
-        close(playerDescriptors[i]);
+		}
+			cout<<"po"<<endl;
+        //close(playerDescriptors[i]);
     }
 }
 
