@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <algorithm>
+#include <mutex>
 #include <SFML/Graphics.hpp>
 using namespace std;
 
@@ -18,6 +19,7 @@ int mapWidth = 10;
 int mapHeight = 10;
 vector<vector<int>> gameMap;
 vector<vector<int>> players;
+mutex readMutex;
 
 class Pair
 {
@@ -54,8 +56,9 @@ ssize_t readData(int fd, string& buffer) {
         if(cbuffer=='!')
             break;
         else
-            buffer+=string(&cbuffer);
+            buffer+=string(1,cbuffer);
     }
+	cout<<buffer<<endl;
     return buffer.length();
 }
 
@@ -113,7 +116,8 @@ void sfmlWindow(int sd)
         int rectangleHeight = window.getSize().y/mapHeight;
         int player=0;
         int bomb=0;
-
+		
+		lock_guard<mutex> lock(readMutex);
         window.clear();
         for(int i=0; i<mapWidth; i++)
             for(int j=0; j<mapHeight; j++)
@@ -170,7 +174,7 @@ void killPlayer(Pair where)
     players[where.x][where.y]=0;
 }
 
-void clientRead(int sd)
+void startGame(int sd)
 {
     //ssize_t bufsize = 255;
     string buffer;
@@ -194,16 +198,21 @@ void clientRead(int sd)
     cout<<maxPlayersNumber<<endl;
 
     cout<<"start gry\n";
-    thread window = thread(sfmlWindow,sd);
+}
+
+void clientRead(int sd)
+{
     string message;
     while(1)
     {
-        readData(sd, buffer);
-        message=buffer;
+        readData(sd, message);
+		lock_guard<mutex> lock(readMutex);
 		if(message=="end")
 		{
 			cout<<"koniec gry\n";
 			writeData(sd,"stop");
+			close(sd);
+			exit(0);
 		}
         //cout<<message<<endl;
         //ruch
@@ -265,8 +274,10 @@ int main(int args, char * argv[]) {
     cout<<"cd="<<cd<<endl;
     if(cd==0)
     {
-        clientRead(sd);
+		startGame(sd);
+		thread t(clientRead,sd);
+		sfmlWindow(sd);
+		t.join();
     }
-
     return 0;
 }

@@ -18,13 +18,14 @@ ssize_t Game::readData(int fd, string& buffer) {
 		if(cbuffer=='!')
 			break;
 		else
-			buffer+=string(&cbuffer);
+			buffer+=string(1,cbuffer);
 	}
     return buffer.length();
 }
 
 void Game::writeData(int fd,const string& buffer) {
     auto ret = write(fd, (buffer+"!").c_str(),buffer.length()+1);
+	cout<<buffer<<endl;
     if(ret==-1) error(1, errno, "write failed on descriptor %d", fd);
     //if(ret!=buffer.length()) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, buffer.length(), ret);
 }
