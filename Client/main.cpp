@@ -58,7 +58,10 @@ ssize_t readData(int fd, string& buffer) {
     {
 		ret=read(fd,&cbuffer,1);
 		if(ret==0)
-			return 0;
+		{
+			cout<<"Connection to server lost\n";
+			exit(0);
+		}
         if(cbuffer=='!')
             break;
         else
