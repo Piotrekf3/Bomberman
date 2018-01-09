@@ -10,16 +10,18 @@
 #include <arpa/inet.h>
 #include <algorithm>
 #include <mutex>
+#include <signal.h>
 #include <SFML/Graphics.hpp>
 using namespace std;
 
-const char * ip = "127.0.0.1";
+string ip = "127.0.0.1";
 int maxPlayersNumber=2;
 int mapWidth = 10;
 int mapHeight = 10;
 vector<vector<int>> gameMap;
 vector<vector<int>> players;
 mutex readMutex;
+bool endRead = false;
 
 class Pair
 {
@@ -49,10 +51,14 @@ void printPlayers()
 }
 
 ssize_t readData(int fd, string& buffer) {
-    char cbuffer='0';
+    char cbuffer;
     buffer="";
-    while(read(fd,&cbuffer,1))
+	ssize_t ret=1;
+    while(ret)
     {
+		ret=read(fd,&cbuffer,1);
+		if(ret==0)
+			return 0;
         if(cbuffer=='!')
             break;
         else
@@ -62,10 +68,10 @@ ssize_t readData(int fd, string& buffer) {
     return buffer.length();
 }
 
-void writeData(int fd, const string& buffer) {
-    auto ret = write(fd, (buffer+"!").c_str(), buffer.length()+1);
+ssize_t writeData(int fd, const string& buffer) {
+    ssize_t ret = send(fd, (buffer+"!").c_str(), buffer.length()+1,MSG_NOSIGNAL);
     if(ret==-1) error(1, errno, "write failed on descriptor %d", fd);
-    //if(ret!=buffer.length()) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, buffer.length()+1, ret);
+	return ret;
 }
 
 void sfmlWindow(int sd)
@@ -182,6 +188,8 @@ void startGame(int sd)
     while(buffer!="start")
     {
         readData(sd, buffer);
+		cout<<buffer<<endl;
+		writeData(sd,"ready");
     }
     readData(sd, buffer);
     mapWidth=stoi(buffer);
@@ -203,7 +211,7 @@ void startGame(int sd)
 void clientRead(int sd)
 {
     string message;
-    while(1)
+    while(endRead==false)
     {
         readData(sd, message);
 		lock_guard<mutex> lock(readMutex);
@@ -258,17 +266,27 @@ bool checkIp(string ip)
         return true;
     else return false;
 }
+//not used
+void intHandler(int sd)
+{
+	endRead=true;
+	close(sd);
+	exit(0);
+}
 
 int main(int args, char * argv[]) {
     if(args>1 && checkIp(argv[1]))
+	{
         cout<<"connecting to server on "<<argv[1]<<endl;
+		ip=argv[1];
+	}
     else
         cout<<"connecting to server on localhost\n";
     int sd = socket(AF_INET,SOCK_STREAM,0);
     sockaddr_in saddr;
     saddr.sin_family = AF_INET;
     saddr.sin_port = htons(2500);
-    saddr.sin_addr.s_addr = inet_addr(argv[1]);
+    saddr.sin_addr.s_addr = inet_addr(ip.c_str());
 
     int cd = connect(sd,(sockaddr*) &saddr,sizeof(saddr));
     cout<<"cd="<<cd<<endl;

@@ -37,6 +37,22 @@ void gameEnd()
 	}
 }
 
+void checkConnected(int& connectedNumber, int playerDescriptors[])
+{
+	int n=connectedNumber;
+	for(int i=0;i<n;i++)
+	{
+		string buffer;
+		Game::writeData(playerDescriptors[i],"check");
+		if(Game::readData(playerDescriptors[i],buffer)==0)
+		{
+			cout<<" disconnected\n";
+			playerDescriptors[i]=0;
+			connectedNumber--;
+		}
+	}
+}
+
 int main(int argc, char **argv) {
 
 	//wczytanie konfiguracji
@@ -61,6 +77,7 @@ int main(int argc, char **argv) {
     while(1)
     {
         cd = accept(sd, nullptr, nullptr);
+		checkConnected(i,playerDescriptors);
         if(cd>=0 && i<Game::getMaxPlayersNumber())
         {
 			cout<<"cd="<<cd<<endl;

@@ -14,6 +14,8 @@
 #include <vector>
 #include <atomic>
 #include <fstream>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include "Pair.h"
 
 using namespace std;
@@ -46,8 +48,6 @@ private:
 	atomic<int> playersCount;
 
 	//methods
-	ssize_t readData(int fd, string& buffer);
-	void writeData(int fd,const string& buffer);
 	void sendMoveToAll(int player,Pair from, Pair to);
 	void sendMapChange(int sd, Pair where, int value);
 	void sendGameMap(int sd);
@@ -63,6 +63,7 @@ public:
 	Game(int descriptors[]);
 	~Game();
 	int getPlayersCount(){return playersCount;};
+	void endSignal(){playersCount=0;};
 	static void loadConfig();
 	void loadMap();
 	static int getMaxPlayersNumber() {return maxPlayersNumber;};
@@ -70,6 +71,8 @@ public:
 	static int getMapWidth() {return mapWidth;};
 	static int getMapHeight() {return mapHeight;};
 	static string getExecutablePath();
+	static ssize_t readData(int fd, string& buffer);
+	static ssize_t writeData(int fd,const string& buffer);
 };
 
 #endif

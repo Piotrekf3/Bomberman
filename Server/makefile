@@ -3,7 +3,7 @@
 BUILDPATH=./build
 OBJPATH=./obj
 CC=g++
-CFLAGS= -g -O3 -c -Wall -pthread -std=c++11
+CFLAGS= -g -c -Wall -pthread -std=c++11
 LDFLAGS= -pthread
 FILENAME=server
 

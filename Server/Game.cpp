@@ -13,9 +13,13 @@ int Game::maxPlayersNumber=2;
 ssize_t Game::readData(int fd, string& buffer) {
     char cbuffer;
 	buffer="";
-	while(read(fd,&cbuffer,1))
+	ssize_t ret=1;
+	while(ret)
 	{
-		if(cbuffer=='!')
+		ret=read(fd,&cbuffer,1);
+		if(ret==0)
+			return 0;
+		else if(cbuffer=='!')
 			break;
 		else
 			buffer+=string(1,cbuffer);
@@ -23,11 +27,10 @@ ssize_t Game::readData(int fd, string& buffer) {
     return buffer.length();
 }
 
-void Game::writeData(int fd,const string& buffer) {
-    auto ret = write(fd, (buffer+"!").c_str(),buffer.length()+1);
-	cout<<buffer<<endl;
+ssize_t Game::writeData(int fd,const string& buffer) {
+    ssize_t ret = send(fd, (buffer+"!").c_str(),buffer.length()+1,MSG_NOSIGNAL);
     if(ret==-1) error(1, errno, "write failed on descriptor %d", fd);
-    //if(ret!=buffer.length()) error(0, errno, "wrote less than requested to descriptor %d (%ld/%ld)", fd, buffer.length(), ret);
+	return ret;
 }
 
 //if to = (-1,-1) player is killed
@@ -274,10 +277,12 @@ void Game::clientThread(int playerNumber)
 
     while(!threadStop[playerNumber])
     {
-        cout<<"reading"<<endl;
-        cout<<"threadStop"<<threadStop[playerNumber]<<endl;
-        readData(playerDescriptors[playerNumber], buffer);
-        cout<<buffer<<endl;
+        if(readData(playerDescriptors[playerNumber], buffer)==0)
+		{
+			endSignal();
+		}
+		else
+			cout<<buffer<<endl;
         if(buffer=="left" || buffer=="right" || buffer=="up" || buffer=="down")
         {
             makeMove(playerDescriptors[playerNumber],buffer);
@@ -332,11 +337,9 @@ Game::~Game()
 		writeData(playerDescriptors[i],"end");
         if(t[i].joinable())
 		{
-			cout<<"join"<<endl;
             t[i].join();
 		}
-			cout<<"po"<<endl;
-        //close(playerDescriptors[i]);
+        close(playerDescriptors[i]);
     }
 }
 
