@@ -1,4 +1,4 @@
-mapWidth=10
-mapHeight=10
+mapWidth=15
+mapHeight=15
 maxPlayersNumber=2
 serverIp=0.0.0.0

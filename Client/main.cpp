@@ -53,38 +53,56 @@ void printPlayers()
 ssize_t readData(int fd, string& buffer) {
     char cbuffer;
     buffer="";
-	ssize_t ret=1;
+    ssize_t ret=1;
     while(ret)
     {
-		ret=read(fd,&cbuffer,1);
-		if(ret==0)
-		{
-			cout<<"Connection to server lost\n";
-			exit(0);
-		}
+        ret=read(fd,&cbuffer,1);
+        if(ret==0)
+        {
+            cout<<"Connection to server lost\n";
+            exit(0);
+        }
         if(cbuffer=='!')
             break;
         else
             buffer+=string(1,cbuffer);
     }
-	cout<<buffer<<endl;
+    cout<<buffer<<endl;
     return buffer.length();
 }
 
 ssize_t writeData(int fd, const string& buffer) {
     ssize_t ret = send(fd, (buffer+"!").c_str(), buffer.length()+1,MSG_NOSIGNAL);
     if(ret==-1) error(1, errno, "write failed on descriptor %d", fd);
-	return ret;
+    return ret;
 }
 
 void sfmlWindow(int sd)
 {
     sf::RenderWindow window(sf::VideoMode(500,500),"Bomberman");
+    sf::View view(sf::Vector2f(250,250), sf::Vector2f(500,500));
+    window.setView(view);
+    float rectangleWidth = float(window.getSize().x)/mapWidth;
+    float rectangleHeight = float(window.getSize().y)/mapHeight;
+
     vector<vector<sf::RectangleShape>> rectangles(mapWidth,vector<sf::RectangleShape>(mapHeight));
+    for(int i=0; i<mapWidth; i++)
+        for(int j=0; j<mapWidth; j++)
+        {
+            rectangles[i][j].setSize(sf::Vector2f(rectangleWidth,rectangleHeight));
+            rectangles[i][j].setPosition(sf::Vector2f(j*rectangleHeight,i*rectangleWidth));
+        }
+
     vector<sf::CircleShape> bombs(maxPlayersNumber*3);
     for(int i=0; i<maxPlayersNumber*3; i++)
+	{
         bombs[i].setFillColor(sf::Color(0,0,0));
+		bombs[i].setRadius(rectangleWidth/4);
+	}
+
     sf::CircleShape playerCircles[maxPlayersNumber];
+	for(int i=0;i<maxPlayersNumber;i++)
+		playerCircles[i].setRadius(rectangleWidth/2);
 
     string keyPressed="null";
     while (window.isOpen())
@@ -121,18 +139,14 @@ void sfmlWindow(int sd)
             if (event.type == sf::Event::Closed)
                 window.close();
         }
-        int rectangleWidth = window.getSize().x/mapWidth;
-        int rectangleHeight = window.getSize().y/mapHeight;
         int player=0;
         int bomb=0;
-		
-		lock_guard<mutex> lock(readMutex);
+
+        lock_guard<mutex> lock(readMutex);
         window.clear();
         for(int i=0; i<mapWidth; i++)
             for(int j=0; j<mapHeight; j++)
             {
-                rectangles[i][j].setSize(sf::Vector2f(rectangleWidth,rectangleHeight));
-                rectangles[i][j].setPosition(sf::Vector2f(j*rectangleHeight,i*rectangleWidth));
                 if(gameMap[i][j]==0)
                 {
                     rectangles[i][j].setFillColor(sf::Color(0,255,0));
@@ -148,7 +162,6 @@ void sfmlWindow(int sd)
                 window.draw(rectangles[i][j]);
                 if(gameMap[i][j]==3 && bomb<maxPlayersNumber*3)
                 {
-                    bombs[bomb].setRadius(rectangleWidth/4);
                     bombs[bomb].setPosition(sf::Vector2f(j*rectangleHeight+bombs[bomb].getRadius(),
                                                          i*rectangleWidth+bombs[bomb].getRadius()));
                     window.draw(bombs[bomb]);
@@ -156,7 +169,6 @@ void sfmlWindow(int sd)
                 }
                 if(players[i][j]!=0 && player<maxPlayersNumber)
                 {
-                    playerCircles[player].setRadius(rectangleWidth/2);
                     playerCircles[player].setFillColor(sf::Color(255,255,0));
                     playerCircles[player].setPosition(sf::Vector2f(j*rectangleHeight,i*rectangleWidth));
                     window.draw(playerCircles[player]);
@@ -191,8 +203,8 @@ void startGame(int sd)
     while(buffer!="start")
     {
         readData(sd, buffer);
-		cout<<buffer<<endl;
-		writeData(sd,"ready");
+        cout<<buffer<<endl;
+        writeData(sd,"ready");
     }
     readData(sd, buffer);
     mapWidth=stoi(buffer);
@@ -217,14 +229,14 @@ void clientRead(int sd)
     while(endRead==false)
     {
         readData(sd, message);
-		lock_guard<mutex> lock(readMutex);
-		if(message=="end")
-		{
-			cout<<"koniec gry\n";
-			writeData(sd,"stop");
-			close(sd);
-			exit(0);
-		}
+        lock_guard<mutex> lock(readMutex);
+        if(message=="end")
+        {
+            cout<<"koniec gry\n";
+            writeData(sd,"stop");
+            close(sd);
+            exit(0);
+        }
         //cout<<message<<endl;
         //ruch
         if(count(message.begin(),message.end(), ';')==4)
@@ -272,17 +284,17 @@ bool checkIp(string ip)
 //not used
 void intHandler(int sd)
 {
-	endRead=true;
-	close(sd);
-	exit(0);
+    endRead=true;
+    close(sd);
+    exit(0);
 }
 
 int main(int args, char * argv[]) {
     if(args>1 && checkIp(argv[1]))
-	{
+    {
         cout<<"connecting to server on "<<argv[1]<<endl;
-		ip=argv[1];
-	}
+        ip=argv[1];
+    }
     else
         cout<<"connecting to server on localhost\n";
     int sd = socket(AF_INET,SOCK_STREAM,0);
@@ -295,10 +307,10 @@ int main(int args, char * argv[]) {
     cout<<"cd="<<cd<<endl;
     if(cd==0)
     {
-		startGame(sd);
-		thread t(clientRead,sd);
-		sfmlWindow(sd);
-		t.join();
+        startGame(sd);
+        thread t(clientRead,sd);
+        sfmlWindow(sd);
+        t.join();
     }
     return 0;
 }
