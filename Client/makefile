@@ -3,7 +3,7 @@
 BUILDPATH=./build
 OBJPATH=./obj
 CC=g++
-CFLAGS=-g -Wall -pthread -std=c++11
+CFLAGS=-g -Wall -O3 -pthread -std=c++11
 SFMLFLAGS=-lsfml-graphics -lsfml-window -lsfml-system
 FILENAME=client
 
