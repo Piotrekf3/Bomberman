@@ -24,7 +24,7 @@ void gameEnd()
 {
 	while(1)
 	{
-		sleep(3);
+		sleep(1);
 		lock_guard<mutex> lock(gamesMutex);
 		for(auto it=games.begin();it!=games.end();)
 		{

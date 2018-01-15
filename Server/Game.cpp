@@ -12,25 +12,26 @@ int Game::maxPlayersNumber=2;
 
 ssize_t Game::readData(int fd, string& buffer) {
     char cbuffer;
-	buffer="";
-	ssize_t ret=1;
-	while(ret)
-	{
-		ret=read(fd,&cbuffer,1);
-		if(ret==0)
-			return 0;
-		else if(cbuffer=='!')
-			break;
-		else
-			buffer+=string(1,cbuffer);
-	}
+    buffer="";
+    ssize_t ret=1;
+    while(ret)
+    {
+        ret=read(fd,&cbuffer,1);
+        if(ret==0)
+            return 0;
+        else if(cbuffer=='!')
+            break;
+        else
+            buffer+=string(1,cbuffer);
+    }
     return buffer.length();
 }
 
 ssize_t Game::writeData(int fd,const string& buffer) {
+    cout<<buffer<<endl;
     ssize_t ret = send(fd, (buffer+"!").c_str(),buffer.length()+1,MSG_NOSIGNAL);
     if(ret==-1) error(1, errno, "write failed on descriptor %d", fd);
-	return ret;
+    return ret;
 }
 
 //if to = (-1,-1) player is killed
@@ -54,6 +55,7 @@ void Game::sendMoveToAll(int player,Pair from, Pair to)
 
 void Game::sendMapChange(int sd, Pair where, int value)
 {
+    cout<<"mapChange"<<endl;
     string buffer;
     buffer = to_string(where.x) + ";" + to_string(where.y) + ";" + to_string(value);
     writeData(sd ,buffer);
@@ -83,9 +85,9 @@ Pair Game::getPlayerPosition(int player)
 bool Game::validateMove(int player, const string& direction)
 {
     Pair position = getPlayerPosition(player);
-	if(position.x==-1 && position.y==-1)
-		return false;
-	else if(direction=="left" && (position.y-1) >= 0 && players[position.x][position.y-1]==0
+    if(position.x==-1 && position.y==-1)
+        return false;
+    else if(direction=="left" && (position.y-1) >= 0 && players[position.x][position.y-1]==0
             && gameMap[position.x][position.y-1]%3==0)
     {
         return true;
@@ -155,86 +157,91 @@ void Game::bombThread(Pair position, int playerNumber)
 {
     sleep(3);
     gameMap[position.x][position.y]=0;
-	vector<Pair> destroyedBlocks;
-	for(int i=position.y;i<mapWidth;i++)
-	{
-		if(gameMap[position.x][i]==2)
-			break;
-		else if(gameMap[position.x][i]==1)
-		{
-			destroyedBlocks.push_back(Pair(position.x,i));
-			gameMap[position.x][i]=0;
-		}
-		else if(players[position.x][i]!=0)
-		{
-			int player = players[position.x][i];
-			players[position.x][i]=0;
-			sendMoveToAll(player,Pair(position.x,i),Pair(-1,-1));
-			playersCount--;
-		}
-	}
-
-	for(int i=position.y;i>=0;i--)
-	{
-		if(gameMap[position.x][i]==2)
-			break;
-		else if(gameMap[position.x][i]==1)
-		{
-			destroyedBlocks.push_back(Pair(position.x,i));
-			gameMap[position.x][i]=0;
-		}
-		else if(players[position.x][i]!=0)
-		{
-			int player = players[position.x][i];
-			players[position.x][i]=0;
-			sendMoveToAll(player,Pair(position.x,i),Pair(-1,-1));
-			playersCount--;
-		}
-	}
-
-	for(int i=position.x;i<mapHeight;i++)
-	{
-		if(gameMap[i][position.y]==2)
-			break;
-		else if(gameMap[i][position.y]==1)
-		{
-			destroyedBlocks.push_back(Pair(i,position.y));
-			gameMap[i][position.y]=0;
-		}
-		else if(players[i][position.y]!=0)
-		{
-			int player = players[i][position.y];
-			players[i][position.y]=0;
-			sendMoveToAll(player,Pair(i,position.y),Pair(-1,-1));
-			playersCount--;
-		}
-	}
-
-	for(int i=position.x;i>=0;i--)
-	{
-		if(gameMap[i][position.y]==2)
-			break;
-		else if(gameMap[i][position.y]==1)
-		{
-			destroyedBlocks.push_back(Pair(i,position.y));
-			gameMap[i][position.y]=0;
-		}
-		else if(players[i][position.y]!=0)
-		{
-			int player = players[i][position.y];
-			players[i][position.y]=0;
-			sendMoveToAll(player,Pair(i,position.y),Pair(-1,-1));
-			playersCount--;
-		}
-	}
-
-    for(int i=0; i<maxPlayersNumber; i++)
+    vector<Pair> destroyedBlocks;
+    for(int i=position.y; i<mapWidth; i++)
     {
-        sendMapChange(playerDescriptors[i],position,0);
-		for(auto&& it : destroyedBlocks)
-		{
-        	sendMapChange(playerDescriptors[i],it,0);
-		}
+        if(gameMap[position.x][i]==2)
+            break;
+        else if(gameMap[position.x][i]==1)
+        {
+            destroyedBlocks.push_back(Pair(position.x,i));
+            gameMap[position.x][i]=0;
+        }
+        else if(players[position.x][i]!=0)
+        {
+            int player = players[position.x][i];
+            players[position.x][i]=0;
+            if(!threadStop[0])
+                sendMoveToAll(player,Pair(position.x,i),Pair(-1,-1));
+            playersCount--;
+        }
+    }
+    for(int i=position.y; i>=0; i--)
+    {
+        if(gameMap[position.x][i]==2)
+            break;
+        else if(gameMap[position.x][i]==1)
+        {
+            destroyedBlocks.push_back(Pair(position.x,i));
+            gameMap[position.x][i]=0;
+        }
+        else if(players[position.x][i]!=0)
+        {
+            int player = players[position.x][i];
+            players[position.x][i]=0;
+            if(!threadStop[0])
+                sendMoveToAll(player,Pair(position.x,i),Pair(-1,-1));
+            playersCount--;
+        }
+    }
+
+    for(int i=position.x; i<mapHeight; i++)
+    {
+        if(gameMap[i][position.y]==2)
+            break;
+        else if(gameMap[i][position.y]==1)
+        {
+            destroyedBlocks.push_back(Pair(i,position.y));
+            gameMap[i][position.y]=0;
+        }
+        else if(players[i][position.y]!=0)
+        {
+            int player = players[i][position.y];
+            players[i][position.y]=0;
+            if(!threadStop[0])
+                sendMoveToAll(player,Pair(i,position.y),Pair(-1,-1));
+            playersCount--;
+        }
+    }
+
+    for(int i=position.x; i>=0; i--)
+    {
+        if(gameMap[i][position.y]==2)
+            break;
+        else if(gameMap[i][position.y]==1)
+        {
+            destroyedBlocks.push_back(Pair(i,position.y));
+            gameMap[i][position.y]=0;
+        }
+        else if(players[i][position.y]!=0)
+        {
+            int player = players[i][position.y];
+            players[i][position.y]=0;
+            if(!threadStop[0])
+                sendMoveToAll(player,Pair(i,position.y),Pair(-1,-1));
+            playersCount--;
+        }
+    }
+    if(!threadStop[0])
+    {
+        for(int i=0; i<maxPlayersNumber; i++)
+        {
+            sendMapChange(playerDescriptors[i],position,0);
+            for(auto&& it : destroyedBlocks)
+            {
+                sendMapChange(playerDescriptors[i],it,0);
+            }
+        }
     }
     bombs[playerNumber]--;
 }
@@ -278,11 +285,11 @@ void Game::clientThread(int playerNumber)
     while(!threadStop[playerNumber])
     {
         if(readData(playerDescriptors[playerNumber], buffer)==0)
-		{
-			endSignal();
-		}
-		else
-			cout<<buffer<<endl;
+        {
+            endSignal();
+        }
+        else
+            cout<<buffer<<endl;
         if(buffer=="left" || buffer=="right" || buffer=="up" || buffer=="down")
         {
             makeMove(playerDescriptors[playerNumber],buffer);
@@ -307,7 +314,7 @@ Game::Game(int descriptors[]) : gameMap(mapWidth, vector<int>(mapHeight)),
     cout<<"konstruktor"<<endl;
     loadMap();
     initPlayers();
-	playersCount=maxPlayersNumber;
+    playersCount=maxPlayersNumber;
     for(int i=0; i<maxPlayersNumber; i++)
         this->playerDescriptors[i] = descriptors[i];
     for(int i=0; i<maxPlayersNumber; i++)
@@ -334,13 +341,14 @@ Game::~Game()
     for(int i=0; i<maxPlayersNumber; i++)
     {
         threadStop[i]=true;
-		writeData(playerDescriptors[i],"end");
+        writeData(playerDescriptors[i],"end");
         if(t[i].joinable())
-		{
+        {
             t[i].join();
-		}
+        }
         close(playerDescriptors[i]);
     }
+    sleep(4);
 }
 
 void Game::loadConfig()
