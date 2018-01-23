@@ -281,13 +281,6 @@ bool checkIp(string ip)
         return true;
     else return false;
 }
-//not used
-void intHandler(int sd)
-{
-    endRead=true;
-    close(sd);
-    exit(0);
-}
 
 int main(int args, char * argv[]) {
     if(args>1 && checkIp(argv[1]))
