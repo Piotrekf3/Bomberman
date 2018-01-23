@@ -67,7 +67,6 @@ ssize_t readData(int fd, string& buffer) {
         else
             buffer+=string(1,cbuffer);
     }
-    cout<<buffer<<endl;
     return buffer.length();
 }
 
@@ -133,7 +132,6 @@ void sfmlWindow(int sd)
             if(keyPressed!="null")
             {
                 writeData(sd,keyPressed);
-                cout<<"Pressed="<<keyPressed<<endl;
                 keyPressed="null";
             }
             if (event.type == sf::Event::Closed)
@@ -203,22 +201,18 @@ void startGame(int sd)
     while(buffer!="start")
     {
         readData(sd, buffer);
-        cout<<buffer<<endl;
         writeData(sd,"ready");
     }
     readData(sd, buffer);
     mapWidth=stoi(buffer);
     readData(sd, buffer);
     mapHeight=stoi(buffer);
-    cout<<mapWidth<<endl;
-    cout<<mapHeight<<endl;
 
     gameMap.resize(mapWidth,vector<int>(mapHeight));
     players.resize(mapWidth,vector<int>(mapHeight));
 
     readData(sd, buffer);
     maxPlayersNumber=stoi(buffer);
-    cout<<maxPlayersNumber<<endl;
 
     cout<<"start gry\n";
 }
@@ -297,7 +291,6 @@ int main(int args, char * argv[]) {
     saddr.sin_addr.s_addr = inet_addr(ip.c_str());
 
     int cd = connect(sd,(sockaddr*) &saddr,sizeof(saddr));
-    cout<<"cd="<<cd<<endl;
     if(cd==0)
     {
         startGame(sd);
