@@ -60,7 +60,7 @@ private:
 	void placeBomb(int playerNumber);
 
 public:
-	Game(int descriptors[]);
+	explicit Game(int descriptors[]);
 	~Game();
 	int getPlayersCount(){return playersCount;};
 	void endSignal(){playersCount=0;};

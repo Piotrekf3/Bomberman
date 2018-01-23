@@ -28,7 +28,6 @@ void gameEnd()
 		lock_guard<mutex> lock(gamesMutex);
 		for(auto it=games.begin();it!=games.end();)
 		{
-			cout<<(*it)->getPlayersCount()<<endl;
 			if((*it)->getPlayersCount()<=1)
 				it = games.erase(it);
 			else
@@ -72,15 +71,13 @@ int main(int argc, char **argv) {
 	int playerDescriptors[Game::getMaxPlayersNumber()];
 	thread t(gameEnd);
 
-    int cd;
     int i=0;
     while(1)
     {
-        cd = accept(sd, nullptr, nullptr);
+    	int cd = accept(sd, nullptr, nullptr);
 		checkConnected(i,playerDescriptors);
         if(cd>=0 && i<Game::getMaxPlayersNumber())
         {
-			cout<<"cd="<<cd<<endl;
             playerDescriptors[i]=cd;
 			i++;
         }
@@ -93,7 +90,6 @@ int main(int argc, char **argv) {
 			i=0;
         }
     }
-	cout<<"main koniec"<<endl;
     close(sd);
     return 0;
 }

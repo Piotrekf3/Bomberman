@@ -28,7 +28,6 @@ ssize_t Game::readData(int fd, string& buffer) {
 }
 
 ssize_t Game::writeData(int fd,const string& buffer) {
-    cout<<buffer<<endl;
     ssize_t ret = send(fd, (buffer+"!").c_str(),buffer.length()+1,MSG_NOSIGNAL);
     if(ret==-1) error(1, errno, "write failed on descriptor %d", fd);
     return ret;
@@ -55,7 +54,6 @@ void Game::sendMoveToAll(int player,Pair from, Pair to)
 
 void Game::sendMapChange(int sd, Pair where, int value)
 {
-    cout<<"mapChange"<<endl;
     string buffer;
     buffer = to_string(where.x) + ";" + to_string(where.y) + ";" + to_string(value);
     writeData(sd ,buffer);
@@ -267,7 +265,6 @@ void Game::placeBomb(int playerNumber)
 
 void Game::clientThread(int playerNumber)
 {
-    cout<<playerNumber<<endl;
     string buffer;
     //start game
     buffer="start";
@@ -288,8 +285,6 @@ void Game::clientThread(int playerNumber)
         {
             endSignal();
         }
-        else
-            cout<<buffer<<endl;
         if(buffer=="left" || buffer=="right" || buffer=="up" || buffer=="down")
         {
             makeMove(playerDescriptors[playerNumber],buffer);
@@ -311,7 +306,6 @@ Game::Game(int descriptors[]) : gameMap(mapWidth, vector<int>(mapHeight)),
     bombs(maxPlayersNumber),
     bombThreads(3*maxPlayersNumber)
 {
-    cout<<"konstruktor"<<endl;
     loadMap();
     initPlayers();
     playersCount=maxPlayersNumber;
@@ -376,7 +370,6 @@ void Game::loadConfig()
                 else if(name=="serverIp")
                 {
                     Game::serverIp=strValue;
-                    cout<<Game::serverIp<<endl;
                 }
             }
             else
@@ -403,9 +396,7 @@ void Game::loadMap()
             for(int j=0; j<mapWidth; j++)
             {
                 Game::gameMap[i][j]=line[j] - '0';
-                cout<<Game::gameMap[i][j];
             }
-            cout<<endl;
         }
     }
 }
