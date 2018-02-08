@@ -342,7 +342,7 @@ Game::~Game()
         }
         close(playerDescriptors[i]);
     }
-    sleep(4);
+    sleep(3);
 }
 
 void Game::loadConfig()

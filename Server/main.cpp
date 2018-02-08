@@ -64,7 +64,11 @@ int main(int argc, char **argv) {
 
     const int one = 1;
     setsockopt(sd,SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
-    bind(sd,(sockaddr*) &saddr,sizeof(saddr));
+    if(bind(sd,(sockaddr*) &saddr,sizeof(saddr))<0)
+	{
+		cout<<"bind failed"<<endl;
+		return 1;
+	}
     listen(sd,Game::getMaxPlayersNumber());
 
 
